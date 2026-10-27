@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="qsdungeons:jar">
+    <output-path>$PROJECT_DIR$/../../miscosasa/servidores/mimijuegos/plugins</output-path>
+    <root id="archive" name="qsdungeons.jar">
+      <element id="module-output" name="qsdungeons" />
+    </root>
+  </artifact>
+</component>

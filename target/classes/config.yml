@@ -1,0 +1,91 @@
+# ============================================================
+#  QSDungeons - Configuracion principal
+#  Todos los textos visibles estan en messages.yml
+#  Los textos usan MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# ============================================================
+
+settings:
+  # Muestra informacion extra en consola.
+  debug: false
+  # Crea una dungeon de ejemplo la primera vez que arranca el plugin.
+  generate-example-dungeon: true
+  # Mundo usado por defecto al crear una dungeon.
+  default-world: world
+  # Cada cuantos ticks se actualizan las bossbars (20 ticks = 1 segundo).
+  bossbar-update-ticks: 20
+  # Radio por defecto para mostrar una bossbar a los jugadores cercanos.
+  default-near-radius: 64
+
+# Sonidos de Bukkit. Deja el valor vacio ("") para desactivar.
+sounds:
+  join: BLOCK_PORTAL_TRAVEL
+  leave: BLOCK_PORTAL_TRIGGER
+  start: ENTITY_ENDER_DRAGON_GROWL
+  complete: UI_TOAST_CHALLENGE_COMPLETE
+  fail: ENTITY_WITHER_SPAWN
+  boss-spawn: ENTITY_WITHER_SPAWN
+  boss-death: ENTITY_ENDER_DRAGON_DEATH
+  loot: ENTITY_ITEM_PICKUP
+  reward: BLOCK_AMETHYST_BLOCK_BREAK
+
+# Estos valores se copian a cada dungeon nueva. Cada dungeon puede
+# sobrescribirlos en su propio dungeon.yml dentro de "settings".
+defaults:
+  max-players: 8
+  min-players: 1
+  time-limit-seconds: 1800
+  auto-enter: true
+  auto-start: true
+  exit-on-leave-region: true
+  leave-on-death: false
+  reset-on-empty: true
+  reset-delay-seconds: 10
+  end-delay-seconds: 5
+  allow-rejoin: true
+  protection: true
+  allow-chest-break: false
+  bosses-after-waves: false
+  entry-permission: ""
+  cooldown-seconds: 0
+  # BOSSES, KILLS, BOSSES_AND_KILLS o MANUAL
+  complete-on: BOSSES
+  # -1 = se calcula automaticamente con los enemigos iniciales.
+  required-kills: -1
+  bossbar:
+    enabled: true
+    title: "<gradient:#8e2de2:#4a00e0><bold>{dungeon}</bold></gradient> <dark_gray>| <white>{kills}<gray>/<white>{total}</white> <dark_gray>| <yellow>Mobs: {mobs} Jefes: {bosses} <dark_gray>| <yellow>{time}"
+    color: PURPLE
+    style: PROGRESS
+    # Solo los jugadores dentro de este radio ven la bossbar.
+    radius: 64
+
+loot:
+  # Rellena los cofres configurados al iniciar la dungeon.
+  fill-chests-on-start: true
+  # Vacia el contenido anterior del cofre antes de rellenarlo.
+  clear-chests-on-start: true
+  # Avisa al jugador cuando recibe loot.
+  announce-reward: true
+  # Si el loot de un jefe/mob cae al suelo (true) o va directo al inventario (false).
+  drop-naturally: false
+  # Borra los drops vanilla de los mobs configurados.
+  clear-vanilla-drops: true
+
+import-export:
+  exports-folder: exports
+  schematics-folder: schematics
+  # Guardar entidades al exportar una estructura con WorldEdit.
+  include-entities: true
+  # Al pegar una estructura, ignorar bloques de aire.
+  ignore-air-on-paste: false
+  # Limite de descompresion para evitar archivos maliciosos (bytes).
+  max-unzip-bytes: 52428800
+
+placeholders:
+  # Formato usado por {time} dentro de textos.
+  time-format: "mm:ss"
+  progress-bar:
+    length: 20
+    symbol: "|"
+    completed-color: "<green>"
+    remaining-color: "<dark_gray>"

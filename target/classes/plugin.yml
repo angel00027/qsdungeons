@@ -1,0 +1,33 @@
+name: QSDungeons
+version: '1.0.0'
+main: org.qs.qsdungeons.QsDungeons
+api-version: '1.21'
+authors: [QS]
+description: Dungeons con jefes, loot, bossbars y placeholders.
+load: POSTWORLD
+softdepend:
+  - WorldEdit
+  - FastAsyncWorldEdit
+  - PlaceholderAPI
+  - MythicMobs
+
+commands:
+  dungeon:
+    description: Comando principal de QSDungeons.
+    usage: /dungeon help
+    aliases: [dungeons, qsd, qsdungeons]
+    permission: qsdungeons.use
+
+permissions:
+  qsdungeons.use:
+    description: Permite usar /dungeon y entrar a dungeons.
+    default: true
+  qsdungeons.admin:
+    description: Permite administrar dungeons, loot, jefes y regiones.
+    default: op
+  qsdungeons.admin.bypass:
+    description: Ignora la proteccion de bloques dentro de las dungeons.
+    default: op
+  qsdungeons.cooldown.bypass:
+    description: Ignora el cooldown de reentrada a dungeons.
+    default: op
