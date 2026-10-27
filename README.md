@@ -483,7 +483,7 @@ spawns:
     location: { world: world, x: 110.5, y: 65.0, z: 110.5 } # Punto base
     amount: 5                       # Cantidad total de la oleada
     max-alive: 5                    # Maximo vivo al mismo tiempo
-    respawn-seconds: 0              # 0 = sin respawn; configura segundos para reaparecer
+     respawn-seconds: 0              # 0 = sin respawn; configura segundos para reaparecer
     spawn-interval-seconds: 0       # Intervalo entre spawns iniciales; 0 = juntos
     radius: 3.0                     # Radio aleatorio alrededor del punto
     min-player-distance: 8          # Distancia minima respecto a jugadores
@@ -521,7 +521,7 @@ rewards:
     material: CHEST                  # Material original del bloque
     block-data: "minecraft:chest[facing=north,type=single,waterlogged=false]" # Estado del bloque
     one-time: true                   # Solo una vez por partida
-    respawn-seconds: 0               # 0 = sin respawn; requiere one-time=false
+     respawn-seconds: 0               # 0 = sin respawn; requiere one-time=false
     direct-give: false               # false = soltar al mundo; true = inventario
     announce: true                   # Mostrar mensaje al recibir loot
     commands: []                     # Comandos ejecutados al romperlo
