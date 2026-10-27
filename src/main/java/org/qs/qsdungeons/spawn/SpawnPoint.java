@@ -6,6 +6,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.qs.qsdungeons.storage.ItemSerializer;
 import org.qs.qsdungeons.storage.LocationSerializer;
+import org.qs.qsdungeons.util.ConfigValues;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -61,8 +62,8 @@ public final class SpawnPoint {
         spawn.location = LocationSerializer.read(section.getConfigurationSection("location"));
         spawn.amount = Math.max(1, section.getInt("amount", spawn.amount));
         spawn.maxAlive = Math.max(1, section.getInt("max-alive", spawn.amount));
-        spawn.respawnSeconds = Math.max(0, section.getInt("respawn-seconds", spawn.respawnSeconds));
-        spawn.spawnIntervalSeconds = Math.max(0, section.getInt("spawn-interval-seconds", spawn.spawnIntervalSeconds));
+        spawn.respawnSeconds = ConfigValues.parseDuration(section.getString("respawn-seconds"), spawn.respawnSeconds);
+        spawn.spawnIntervalSeconds = ConfigValues.parseDuration(section.getString("spawn-interval-seconds"), spawn.spawnIntervalSeconds);
         spawn.radius = Math.max(0.0D, section.getDouble("radius", spawn.radius));
         spawn.minPlayerDistance = Math.max(0, section.getInt("min-player-distance", spawn.minPlayerDistance));
         spawn.requireGround = section.getBoolean("require-ground", spawn.requireGround);

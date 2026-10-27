@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.qs.qsdungeons.storage.LocationSerializer;
+import org.qs.qsdungeons.util.ConfigValues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public final class RewardBlock {
         reward.material = material == null || !material.isBlock() ? Material.CHEST : material;
         reward.blockData = section.getString("block-data", "");
         reward.oneTime = section.getBoolean("one-time", true);
-        reward.respawnSeconds = Math.max(0, section.getInt("respawn-seconds", 0));
+        reward.respawnSeconds = ConfigValues.parseDuration(section.getString("respawn-seconds"), 0);
         reward.directGive = section.getBoolean("direct-give", false);
         reward.announce = section.getBoolean("announce", true);
         reward.commands.addAll(section.getStringList("commands"));

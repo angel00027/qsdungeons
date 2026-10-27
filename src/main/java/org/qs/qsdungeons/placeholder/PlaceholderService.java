@@ -125,6 +125,26 @@ public final class PlaceholderService {
         return String.format(Locale.US, "%02d:%02d", minutes + hours * 60, rest);
     }
 
+    public String formatDuration(long totalSeconds) {
+        long seconds = Math.max(0, totalSeconds);
+        if (seconds < 60) {
+            return seconds + "s";
+        }
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + "m " + (seconds % 60) + "s";
+        }
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + "h " + (minutes % 60) + "m";
+        }
+        long days = hours / 24;
+        if (days < 30) {
+            return days + "d " + (hours % 24) + "h";
+        }
+        return (days / 30) + " mes " + (days % 30) + "d";
+    }
+
     public String progressBar(double progress) {
         int length = plugin.getConfigManager().getProgressBarLength();
         String symbol = plugin.getConfigManager().getProgressBarSymbol();

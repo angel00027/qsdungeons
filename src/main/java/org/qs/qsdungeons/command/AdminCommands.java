@@ -991,7 +991,7 @@ public final class AdminCommands {
                 }
                 chest.setLootTable(value.toLowerCase(Locale.ROOT));
             }
-            case "refill-seconds" -> chest.setRefillSeconds(ConfigValues.parseInt(value, chest.getRefillSeconds()));
+            case "refill-seconds" -> chest.setRefillSeconds(ConfigValues.parseDuration(value, chest.getRefillSeconds()));
             case "enabled" -> chest.setEnabled(Boolean.parseBoolean(value));
             default -> {
                 send(sender, "command.setting-unknown", Map.of("key", key));
@@ -1111,7 +1111,7 @@ public final class AdminCommands {
                 reward.setLootTable(value.toLowerCase(Locale.ROOT));
             }
             case "one-time" -> reward.setOneTime(Boolean.parseBoolean(value));
-            case "respawn-seconds" -> reward.setRespawnSeconds(ConfigValues.parseInt(value, reward.getRespawnSeconds()));
+            case "respawn-seconds" -> reward.setRespawnSeconds(ConfigValues.parseDuration(value, reward.getRespawnSeconds()));
             case "direct-give" -> reward.setDirectGive(Boolean.parseBoolean(value));
             case "announce" -> reward.setAnnounce(Boolean.parseBoolean(value));
             default -> {

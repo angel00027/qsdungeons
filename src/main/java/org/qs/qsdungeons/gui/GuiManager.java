@@ -26,6 +26,7 @@ import org.qs.qsdungeons.dungeon.RewardBlock;
 import org.qs.qsdungeons.dungeon.instance.DungeonInstance;
 import org.qs.qsdungeons.loot.LootEntry;
 import org.qs.qsdungeons.loot.LootTable;
+import org.qs.qsdungeons.util.ConfigValues;
 import org.qs.qsdungeons.spawn.MobType;
 import org.qs.qsdungeons.spawn.SpawnPoint;
 import org.qs.qsdungeons.util.Text;
@@ -170,9 +171,36 @@ public final class GuiManager {
         GuiHolder holder = new GuiHolder("main", null, null, 0);
         Inventory inventory = create(holder);
         button(inventory, holder, "main", "dungeons", "open|dungeon-list");
+        button(inventory, holder, "main", "join", "open|player-dungeons");
         button(inventory, holder, "main", "create", "create-dungeon");
         button(inventory, holder, "main", "reload", "reload");
         button(inventory, holder, "main", "close", "close");
+        open(player, inventory);
+    }
+
+    public void openPlayerDungeons(Player player, int page) {
+        GuiHolder holder = new GuiHolder("player-dungeons", null, null, page);
+        Inventory inventory = create(holder);
+        List<ListEntry> entries = new ArrayList<>();
+        for (Dungeon dungeon : sortedDungeons()) {
+            DungeonInstance instance = plugin.getDungeonManager().getInstance(dungeon.getId());
+            long cooldown = plugin.getDungeonManager().getCooldownRemaining(player, dungeon);
+            Map<String, String> ph = new LinkedHashMap<>();
+            ph.put("dungeon", dungeon.getId());
+            ph.put("name", dungeon.getDisplayName());
+            ph.put("state", stateLabel(instance));
+            ph.put("enabled", yesNo(dungeon.isEnabled()));
+            ph.put("ready", yesNo(dungeon.isReady()));
+            ph.put("players", String.valueOf(instance == null ? 0 : instance.getPlayerCount()));
+            ph.put("max_players", String.valueOf(dungeon.getSettings().getMaxPlayers()));
+            ph.put("cooldown", cooldown <= 0 ? "Disponible"
+                    : plugin.getPlaceholderService().formatDuration(cooldown));
+            ph.put("world", dungeon.getRegion() == null ? "-" : dungeon.getRegion().getWorldName());
+            entries.add(new ListEntry(dungeon.getId(), ph));
+        }
+        fillDynamic(inventory, holder, "player-dungeons", "dungeon-entry", entries,
+                "player.dungeon.entry");
+        navigation(inventory, holder, "player-dungeons", "main", page);
         open(player, inventory);
     }
 
@@ -793,6 +821,13 @@ public final class GuiManager {
                 case "close" -> player.closeInventory();
                 case "open" -> openMenu(player, payload, holder.getDungeonId(), holder.getTargetId(),
                         holder.getPage());
+                case "player.dungeon.entry" -> {
+                    Dungeon target = dungeon(payload);
+                    player.closeInventory();
+                    if (target != null) {
+                        plugin.getDungeonManager().join(player, target);
+                    }
+                }
                 case "reload" -> {
                     plugin.getDungeonManager().reload();
                     msg(player, "reloaded", Map.of());
@@ -1620,8 +1655,8 @@ public final class GuiManager {
                 case "entity" -> applySpawnEntity(spawn, value);
                 case "amount" -> spawn.setAmount(Integer.parseInt(value));
                 case "max-alive" -> spawn.setMaxAlive(Integer.parseInt(value));
-                case "respawn-seconds" -> spawn.setRespawnSeconds(Integer.parseInt(value));
-                case "spawn-interval-seconds" -> spawn.setSpawnIntervalSeconds(Integer.parseInt(value));
+                case "respawn-seconds" -> spawn.setRespawnSeconds(ConfigValues.parseDuration(value, spawn.getRespawnSeconds()));
+                case "spawn-interval-seconds" -> spawn.setSpawnIntervalSeconds(ConfigValues.parseDuration(value, spawn.getSpawnIntervalSeconds()));
                 case "radius" -> spawn.setRadius(Double.parseDouble(value));
                 case "min-player-distance" -> spawn.setMinPlayerDistance(Integer.parseInt(value));
                 case "require-ground" -> spawn.setRequireGround(Boolean.parseBoolean(value));
@@ -1773,12 +1808,12 @@ public final class GuiManager {
         }
         if (rightClick) {
             startPrompt(player, "value", Map.of("key", field, "current",
-                            field.equals("enabled") ? yesNo(chest.isEnabled()) : String.valueOf(chest.getRefillSeconds())),
+                            field.equals("enabled") ? yesNo(chest.isEnabled()) : duration(chest.getRefillSeconds())),
                     () -> openChestEditor(player, dungeon, chest),
                     input -> {
                         try {
                             switch (field) {
-                                case "refill-seconds" -> chest.setRefillSeconds(Integer.parseInt(input));
+                                 case "refill-seconds" -> chest.setRefillSeconds(ConfigValues.parseDuration(input, chest.getRefillSeconds()));
                                 case "enabled" -> chest.setEnabled(Boolean.parseBoolean(input));
                                 default -> {
                                 }
@@ -1831,7 +1866,7 @@ public final class GuiManager {
                     input -> {
                         try {
                             switch (field) {
-                                case "respawn-seconds" -> reward.setRespawnSeconds(Integer.parseInt(input));
+                                 case "respawn-seconds" -> reward.setRespawnSeconds(ConfigValues.parseDuration(input, reward.getRespawnSeconds()));
                                 case "one-time" -> reward.setOneTime(Boolean.parseBoolean(input));
                                 case "direct-give" -> reward.setDirectGive(Boolean.parseBoolean(input));
                                 case "announce" -> reward.setAnnounce(Boolean.parseBoolean(input));
@@ -1909,6 +1944,7 @@ public final class GuiManager {
         switch (menu) {
             case "main" -> openMain(player);
             case "dungeon-list" -> openDungeonList(player, page);
+            case "player-dungeons" -> openPlayerDungeons(player, page);
             case "dungeon-editor" -> openDungeonEditor(player, dungeon);
             case "settings" -> openSettings(player, dungeon);
             case "spawns" -> openSpawns(player, dungeon, page);
@@ -2161,8 +2197,8 @@ public final class GuiManager {
         ph.put("type", spawn.getType().name());
         ph.put("amount", String.valueOf(spawn.getAmount()));
         ph.put("max_alive", String.valueOf(spawn.getMaxAlive()));
-        ph.put("respawn", String.valueOf(spawn.getRespawnSeconds()));
-        ph.put("interval", String.valueOf(spawn.getSpawnIntervalSeconds()));
+         ph.put("respawn", duration(spawn.getRespawnSeconds()));
+         ph.put("interval", duration(spawn.getSpawnIntervalSeconds()));
         ph.put("radius", number(spawn.getRadius()));
         ph.put("min_player_distance", String.valueOf(spawn.getMinPlayerDistance()));
         ph.put("location", location(spawn.getLocation()));
@@ -2237,7 +2273,7 @@ public final class GuiManager {
         Map<String, String> ph = new LinkedHashMap<>();
         ph.put("chest", chest.getId());
         ph.put("loot_table", empty(chest.getLootTable()));
-        ph.put("refill", String.valueOf(chest.getRefillSeconds()));
+         ph.put("refill", duration(chest.getRefillSeconds()));
         ph.put("enabled", yesNo(chest.isEnabled()));
         ph.put("location", location(chest.getLocation()));
         return ph;
@@ -2249,7 +2285,7 @@ public final class GuiManager {
         ph.put("loot_table", empty(reward.getLootTable()));
         ph.put("material", reward.getMaterial().name());
         ph.put("one_time", yesNo(reward.isOneTime()));
-        ph.put("respawn", String.valueOf(reward.getRespawnSeconds()));
+         ph.put("respawn", duration(reward.getRespawnSeconds()));
         ph.put("direct_give", yesNo(reward.isDirectGive()));
         ph.put("announce", yesNo(reward.isAnnounce()));
         ph.put("location", location(reward.getLocation()));
@@ -2260,20 +2296,20 @@ public final class GuiManager {
         return switch (key) {
             case "max-players" -> String.valueOf(settings.getMaxPlayers());
             case "min-players" -> String.valueOf(settings.getMinPlayers());
-            case "time-limit-seconds" -> String.valueOf(settings.getTimeLimitSeconds());
+            case "time-limit-seconds" -> duration(settings.getTimeLimitSeconds());
             case "auto-enter" -> yesNo(settings.isAutoEnter());
             case "auto-start" -> yesNo(settings.isAutoStart());
             case "exit-on-leave-region" -> yesNo(settings.isExitOnLeaveRegion());
             case "leave-on-death" -> yesNo(settings.isLeaveOnDeath());
             case "reset-on-empty" -> yesNo(settings.isResetOnEmpty());
-            case "reset-delay-seconds" -> String.valueOf(settings.getResetDelaySeconds());
-            case "end-delay-seconds" -> String.valueOf(settings.getEndDelaySeconds());
+            case "reset-delay-seconds" -> duration(settings.getResetDelaySeconds());
+            case "end-delay-seconds" -> duration(settings.getEndDelaySeconds());
             case "allow-rejoin" -> yesNo(settings.isAllowRejoin());
             case "protection" -> yesNo(settings.isProtection());
             case "allow-chest-break" -> yesNo(settings.isAllowChestBreak());
             case "bosses-after-waves" -> yesNo(settings.isBossesAfterWaves());
             case "entry-permission" -> empty(settings.getEntryPermission());
-            case "cooldown-seconds" -> String.valueOf(settings.getCooldownSeconds());
+            case "cooldown-seconds" -> duration(settings.getCooldownSeconds());
             case "complete-on" -> settings.getCompleteOn().name();
             case "required-kills" -> String.valueOf(settings.getRequiredKills());
             case "bossbar.enabled" -> yesNo(settings.getBossBar().isEnabled());
@@ -2291,8 +2327,8 @@ public final class GuiManager {
             case "entity" -> spawn.getEntity();
             case "amount" -> String.valueOf(spawn.getAmount());
             case "max-alive" -> String.valueOf(spawn.getMaxAlive());
-            case "respawn-seconds" -> String.valueOf(spawn.getRespawnSeconds());
-            case "spawn-interval-seconds" -> String.valueOf(spawn.getSpawnIntervalSeconds());
+            case "respawn-seconds" -> duration(spawn.getRespawnSeconds());
+            case "spawn-interval-seconds" -> duration(spawn.getSpawnIntervalSeconds());
             case "radius" -> number(spawn.getRadius());
             case "min-player-distance" -> String.valueOf(spawn.getMinPlayerDistance());
             case "require-ground" -> yesNo(spawn.isRequireGround());
@@ -2344,7 +2380,7 @@ public final class GuiManager {
     private String rewardValue(RewardBlock reward, String field) {
         return switch (field) {
             case "one-time" -> yesNo(reward.isOneTime());
-            case "respawn-seconds" -> String.valueOf(reward.getRespawnSeconds());
+            case "respawn-seconds" -> duration(reward.getRespawnSeconds());
             case "direct-give" -> yesNo(reward.isDirectGive());
             case "announce" -> yesNo(reward.isAnnounce());
             default -> "-";
@@ -2487,6 +2523,10 @@ public final class GuiManager {
         DungeonState state = instance == null ? DungeonState.IDLE : instance.getState();
         String raw = plugin.getMessages().raw("placeholder.state." + state.name().toLowerCase(Locale.ROOT));
         return raw == null ? state.name() : raw;
+    }
+
+    private String duration(long seconds) {
+        return plugin.getPlaceholderService().formatDuration(seconds);
     }
 
     private String yesNo(boolean value) {

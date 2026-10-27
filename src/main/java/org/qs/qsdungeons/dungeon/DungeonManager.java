@@ -169,7 +169,7 @@ public final class DungeonManager {
             if (cooldown > 0) {
                 plugin.getMessages().send(player, "join.cooldown", Map.of(
                         "dungeon", dungeon.getId(),
-                        "time", plugin.getPlaceholderService().formatTime(cooldown)));
+                        "time", plugin.getPlaceholderService().formatDuration(cooldown)));
                 return false;
             }
         }

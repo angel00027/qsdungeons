@@ -311,13 +311,15 @@ public final class DungeonInstance {
         pendingSuccess = true;
         scheduleStop(settings.getEndDelaySeconds(), true);
         hideBars();
-        broadcast("dungeon.completed", Map.of("dungeon", dungeon.getId(), "time", String.valueOf(settings.getEndDelaySeconds())));
+        broadcast("dungeon.completed", Map.of("dungeon", dungeon.getId(), "time",
+                plugin.getPlaceholderService().formatDuration(settings.getEndDelaySeconds())));
         for (Player player : getPlayersOnline()) {
             plugin.getMessages().title(player, "complete", Map.of(
                     "dungeon", dungeon.getId(),
                     "dungeon_name", dungeon.getDisplayName()), this);
             plugin.getConfigManager().playSound(player, "complete");
-            plugin.getMessages().send(player, "dungeon.complete-loot", Map.of("time", String.valueOf(settings.getEndDelaySeconds())), this);
+            plugin.getMessages().send(player, "dungeon.complete-loot",
+                    Map.of("time", plugin.getPlaceholderService().formatDuration(settings.getEndDelaySeconds())), this);
         }
         plugin.getDungeonManager().executeCommandsForPlayers(settings.getCommandsOnComplete(), this);
         plugin.getDungeonManager().executeCommands(settings.getCommandsOnComplete(), null, this);
@@ -334,11 +336,13 @@ public final class DungeonInstance {
         pendingSuccess = false;
         scheduleStop(settings.getEndDelaySeconds(), false);
         hideBars();
-        broadcast("dungeon.failed", Map.of("reason", failReason, "time", String.valueOf(settings.getEndDelaySeconds())));
+        broadcast("dungeon.failed", Map.of("reason", failReason, "time",
+                plugin.getPlaceholderService().formatDuration(settings.getEndDelaySeconds())));
         for (Player player : getPlayersOnline()) {
             plugin.getMessages().title(player, "fail", Map.of("reason", failReason), this);
             plugin.getConfigManager().playSound(player, "fail");
-            plugin.getMessages().send(player, "dungeon.fail-loot", Map.of("reason", failReason, "time", String.valueOf(settings.getEndDelaySeconds())), this);
+            plugin.getMessages().send(player, "dungeon.fail-loot", Map.of("reason", failReason,
+                    "time", plugin.getPlaceholderService().formatDuration(settings.getEndDelaySeconds())), this);
         }
         plugin.getDungeonManager().executeCommandsForPlayers(settings.getCommandsOnFail(), this);
         plugin.getDungeonManager().executeCommands(settings.getCommandsOnFail(), null, this);
@@ -657,7 +661,7 @@ public final class DungeonInstance {
         } else if (reward.getRespawnSeconds() > 0) {
             rewardRestoreAt.put(reward.getId(), now() + reward.getRespawnSeconds() * 1000L);
             plugin.getMessages().send(player, "loot.reward-respawn",
-                    Map.of("time", plugin.getPlaceholderService().formatTime(reward.getRespawnSeconds())), this);
+                            Map.of("time", plugin.getPlaceholderService().formatDuration(reward.getRespawnSeconds())), this);
         } else {
             brokenRewards.add(reward.getId());
         }

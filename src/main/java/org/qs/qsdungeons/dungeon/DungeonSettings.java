@@ -1,6 +1,7 @@
 package org.qs.qsdungeons.dungeon;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.qs.qsdungeons.util.ConfigValues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,20 +77,20 @@ public final class DungeonSettings {
         }
         result.maxPlayers = section.getInt("max-players", result.maxPlayers);
         result.minPlayers = section.getInt("min-players", result.minPlayers);
-        result.timeLimitSeconds = section.getInt("time-limit-seconds", result.timeLimitSeconds);
+        result.timeLimitSeconds = ConfigValues.parseDuration(section.getString("time-limit-seconds"), result.timeLimitSeconds);
         result.autoEnter = section.getBoolean("auto-enter", result.autoEnter);
         result.autoStart = section.getBoolean("auto-start", result.autoStart);
         result.exitOnLeaveRegion = section.getBoolean("exit-on-leave-region", result.exitOnLeaveRegion);
         result.leaveOnDeath = section.getBoolean("leave-on-death", result.leaveOnDeath);
         result.resetOnEmpty = section.getBoolean("reset-on-empty", result.resetOnEmpty);
-        result.resetDelaySeconds = section.getInt("reset-delay-seconds", result.resetDelaySeconds);
-        result.endDelaySeconds = section.getInt("end-delay-seconds", result.endDelaySeconds);
+        result.resetDelaySeconds = ConfigValues.parseDuration(section.getString("reset-delay-seconds"), result.resetDelaySeconds);
+        result.endDelaySeconds = ConfigValues.parseDuration(section.getString("end-delay-seconds"), result.endDelaySeconds);
         result.allowRejoin = section.getBoolean("allow-rejoin", result.allowRejoin);
         result.protection = section.getBoolean("protection", result.protection);
         result.allowChestBreak = section.getBoolean("allow-chest-break", result.allowChestBreak);
         result.bossesAfterWaves = section.getBoolean("bosses-after-waves", result.bossesAfterWaves);
         result.entryPermission = section.getString("entry-permission", result.entryPermission);
-        result.cooldownSeconds = section.getInt("cooldown-seconds", result.cooldownSeconds);
+        result.cooldownSeconds = ConfigValues.parseDuration(section.getString("cooldown-seconds"), result.cooldownSeconds);
         result.completeOn = CompleteMode.from(section.getString("complete-on"), result.completeOn);
         result.requiredKills = section.getInt("required-kills", result.requiredKills);
         result.bossBar = BossBarSettings.read(section.getConfigurationSection("bossbar"), result.bossBar);
@@ -144,20 +145,20 @@ public final class DungeonSettings {
             switch (normalized) {
                 case "max-players" -> maxPlayers = Integer.parseInt(value);
                 case "min-players" -> minPlayers = Integer.parseInt(value);
-                case "time-limit-seconds" -> timeLimitSeconds = Integer.parseInt(value);
+                case "time-limit-seconds" -> timeLimitSeconds = ConfigValues.parseDuration(value, timeLimitSeconds);
                 case "auto-enter" -> autoEnter = Boolean.parseBoolean(value);
                 case "auto-start" -> autoStart = Boolean.parseBoolean(value);
                 case "exit-on-leave-region" -> exitOnLeaveRegion = Boolean.parseBoolean(value);
                 case "leave-on-death" -> leaveOnDeath = Boolean.parseBoolean(value);
                 case "reset-on-empty" -> resetOnEmpty = Boolean.parseBoolean(value);
-                case "reset-delay-seconds" -> resetDelaySeconds = Integer.parseInt(value);
-                case "end-delay-seconds" -> endDelaySeconds = Integer.parseInt(value);
+                case "reset-delay-seconds" -> resetDelaySeconds = ConfigValues.parseDuration(value, resetDelaySeconds);
+                case "end-delay-seconds" -> endDelaySeconds = ConfigValues.parseDuration(value, endDelaySeconds);
                 case "allow-rejoin" -> allowRejoin = Boolean.parseBoolean(value);
                 case "protection" -> protection = Boolean.parseBoolean(value);
                 case "allow-chest-break" -> allowChestBreak = Boolean.parseBoolean(value);
                 case "bosses-after-waves" -> bossesAfterWaves = Boolean.parseBoolean(value);
                 case "entry-permission" -> entryPermission = value;
-                case "cooldown-seconds" -> cooldownSeconds = Integer.parseInt(value);
+                case "cooldown-seconds" -> cooldownSeconds = ConfigValues.parseDuration(value, cooldownSeconds);
                 case "complete-on" -> completeOn = CompleteMode.from(value, completeOn);
                 case "required-kills" -> requiredKills = Integer.parseInt(value);
                 case "bossbar.enabled" -> bossBar.setEnabled(Boolean.parseBoolean(value));

@@ -46,4 +46,43 @@ public final class ConfigValues {
             return fallback;
         }
     }
+
+    /** Acepta segundos simples o formatos como 1s, 5m, 2h, 1d y 1mes. */
+    public static int parseDuration(String raw, int fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+        String value = raw.trim().toLowerCase(java.util.Locale.ROOT).replace(" ", "");
+        try {
+            if (value.matches("\\d+")) {
+                return Math.max(0, Integer.parseInt(value));
+            }
+            java.util.regex.Matcher matcher = java.util.regex.Pattern
+                    .compile("(\\d+)(mes(?:es)?|mo|d|h|m|s)").matcher(value);
+            int total = 0;
+            int end = 0;
+            while (matcher.find()) {
+                if (matcher.start() != end) {
+                    return fallback;
+                }
+                long amount = Long.parseLong(matcher.group(1));
+                long multiplier = switch (matcher.group(2)) {
+                    case "s" -> 1L;
+                    case "m" -> 60L;
+                    case "h" -> 3600L;
+                    case "d" -> 86400L;
+                    default -> 2592000L;
+                };
+                long next = (long) total + amount * multiplier;
+                if (next > Integer.MAX_VALUE) {
+                    return Integer.MAX_VALUE;
+                }
+                total = (int) next;
+                end = matcher.end();
+            }
+            return end == value.length() && end > 0 ? total : fallback;
+        } catch (RuntimeException ignored) {
+            return fallback;
+        }
+    }
 }

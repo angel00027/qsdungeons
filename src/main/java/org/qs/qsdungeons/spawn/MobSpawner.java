@@ -80,6 +80,12 @@ public final class MobSpawner {
         if (living == null) {
             return null;
         }
+        // Algunos mobs personalizados pueden heredar invulnerabilidad o
+        // ticks de inmunidad del propio modelo. Los mobs de una dungeon deben
+        // poder recibir daño normalmente, salvo que otro plugin lo vuelva a
+        // cambiar explícitamente después del spawn.
+        living.setInvulnerable(false);
+        living.setNoDamageTicks(0);
         Tags.set(living, Keys.DUNGEON, instance.getDungeon().getId());
         Tags.set(living, Keys.SPAWN, point.getId());
         Tags.set(living, Keys.ENTITY, point.getEntity());

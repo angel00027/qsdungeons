@@ -6,6 +6,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.qs.qsdungeons.storage.LocationSerializer;
+import org.qs.qsdungeons.util.ConfigValues;
 
 /**
  * Cofre que se rellena con una tabla de loot.
@@ -31,7 +32,7 @@ public final class ChestSpawn {
         chest.location = LocationSerializer.read(section.getConfigurationSection("location"));
         chest.lootTable = section.getString("loot-table", "");
         chest.blockData = section.getString("block-data", "");
-        chest.refillSeconds = Math.max(0, section.getInt("refill-seconds", 0));
+        chest.refillSeconds = ConfigValues.parseDuration(section.getString("refill-seconds"), 0);
         chest.enabled = section.getBoolean("enabled", true);
         return chest;
     }
