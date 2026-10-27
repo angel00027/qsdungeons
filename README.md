@@ -524,7 +524,7 @@ rewards:
     respawn-seconds: 0               # 0 = sin respawn; requiere one-time=false
     direct-give: false               # false = soltar al mundo; true = inventario
     announce: true                   # Mostrar mensaje al recibir loot
-    commands: []                     # Comandos ejecutados al romperlo
+    commands: []   # Comandos ejecutados al romperlo
 ```
 
 > `complete-on`:
