@@ -772,7 +772,4 @@ Dependencias opcionales usadas en tiempo de compilación (todas `provided`):
 - **Una instancia por dungeon**: todos los jugadores comparten la misma
   instancia; el estado se reinicia al quedarse vacía (si `reset-on-empty`).
 - **Recarga en caliente**: `/dungeon reload` recarga `config.yml`,
-  `messages.yml`, `menus.yml` y todas las dungeons desde disco.
-#   q s d u n g e o n s 
- 
- 
+  `messages.yml`, `menus.yml` y todas las dungeons desde disco.  
