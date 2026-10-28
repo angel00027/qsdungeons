@@ -30,6 +30,7 @@ menus:
           - "<gray>Estado: <white>{state}</white>"
           - "<green>Disponible para entrar"
           - "<gray>Jugadores: <white>{players}/{max_players}</white>"
+          - "<gray>Cooldown: <white>{cooldown}</white>"
           - "<dark_gray>Clic para entrar"
       dungeon-entry-active:
         material: GOLD_BLOCK
@@ -38,6 +39,7 @@ menus:
           - "<gray>Estado: <white>{state}</white>"
           - "<yellow>Dungeon activa"
           - "<gray>Jugadores: <white>{players}/{max_players}</white>"
+          - "<gray>Cooldown: <white>{cooldown}</white>"
           - "<dark_gray>Clic para unirte"
       dungeon-entry-cooldown:
         material: RED_CONCRETE

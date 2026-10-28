@@ -125,24 +125,32 @@ public final class PlaceholderService {
         return String.format(Locale.US, "%02d:%02d", minutes + hours * 60, rest);
     }
 
+    /** Formato de reloj fijo para interfaces: horas:minutos:segundos. */
+    public String formatClock(long totalSeconds) {
+        long seconds = Math.max(0, totalSeconds);
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        long rest = seconds % 60;
+        return String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, rest);
+    }
+
     public String formatDuration(long totalSeconds) {
         long seconds = Math.max(0, totalSeconds);
-        if (seconds < 60) {
-            return seconds + "s";
-        }
         long minutes = seconds / 60;
-        if (minutes < 60) {
-            return minutes + "m " + (seconds % 60) + "s";
-        }
         long hours = minutes / 60;
-        if (hours < 24) {
-            return hours + "h " + (minutes % 60) + "m";
-        }
         long days = hours / 24;
-        if (days < 30) {
-            return days + "d " + (hours % 24) + "h";
-        }
-        return (days / 30) + " mes " + (days % 30) + "d";
+        long months = days / 30;
+        long remainingDays = days % 30;
+        long remainingHours = hours % 24;
+        long remainingMinutes = minutes % 60;
+        long remainingSeconds = seconds % 60;
+        StringBuilder result = new StringBuilder();
+        if (months > 0) result.append(months).append("mes ");
+        if (remainingDays > 0) result.append(remainingDays).append("d ");
+        if (remainingHours > 0) result.append(remainingHours).append("h ");
+        if (remainingMinutes > 0) result.append(remainingMinutes).append("m ");
+        if (remainingSeconds > 0 || result.isEmpty()) result.append(remainingSeconds).append("s");
+        return result.toString().trim();
     }
 
     public String progressBar(double progress) {

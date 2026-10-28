@@ -219,6 +219,7 @@ public final class GuiManager {
             ph.put("max_players", String.valueOf(dungeon.getSettings().getMaxPlayers()));
             ph.put("cooldown", cooldown <= 0 ? "Disponible"
                     : plugin.getPlaceholderService().formatDuration(cooldown));
+            ph.put("cooldown_seconds", String.valueOf(Math.max(0L, cooldown)));
             ph.put("available", cooldown > 0 ? "No (cooldown)" : dungeon.isReady() ? "Si" : "No");
             ph.put("world", dungeon.getRegion() == null ? "-" : dungeon.getRegion().getWorldName());
             entries.add(new ListEntry(dungeon.getId(), ph));
