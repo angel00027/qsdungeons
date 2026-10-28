@@ -77,13 +77,16 @@ public final class GuiManager {
 
     private final QsDungeons plugin;
     private final GuiConfig config;
+    private final GuiConfig playerConfig;
     private final Map<UUID, Prompt> prompts = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<UUID, Location[]> corners = new HashMap<>();
 
     public GuiManager(QsDungeons plugin) {
         this.plugin = plugin;
         this.config = new GuiConfig(plugin);
+        this.playerConfig = new GuiConfig(plugin, "player-menus.yml");
         this.config.load();
+        this.playerConfig.load();
     }
 
     public GuiConfig getConfig() {
@@ -92,6 +95,7 @@ public final class GuiManager {
 
     public void reload() {
         config.reload();
+        playerConfig.reload();
     }
 
     // ------------------------------------------------------------------
@@ -171,7 +175,6 @@ public final class GuiManager {
         GuiHolder holder = new GuiHolder("main", null, null, 0);
         Inventory inventory = create(holder);
         button(inventory, holder, "main", "dungeons", "open|dungeon-list");
-        button(inventory, holder, "main", "join", "open|player-dungeons");
         button(inventory, holder, "main", "create", "create-dungeon");
         button(inventory, holder, "main", "reload", "reload");
         button(inventory, holder, "main", "close", "close");
@@ -182,7 +185,20 @@ public final class GuiManager {
         GuiHolder holder = new GuiHolder("player-dungeons", null, null, page);
         Inventory inventory = create(holder);
         List<ListEntry> entries = new ArrayList<>();
+        List<String> templates = new ArrayList<>();
+        String dungeonMode = playerConfig.getString("dungeons.mode", "all")
+                .toLowerCase(Locale.ROOT);
+        List<String> configuredDungeons = playerConfig.getStringList("dungeons.ids").stream()
+                .map(value -> value.toLowerCase(Locale.ROOT)).toList();
         for (Dungeon dungeon : sortedDungeons()) {
+            if (!dungeon.isEnabled()) {
+                continue;
+            }
+            boolean listed = configuredDungeons.contains(dungeon.getId().toLowerCase(Locale.ROOT));
+            if (dungeonMode.equals("whitelist") && !listed
+                    || dungeonMode.equals("blacklist") && listed) {
+                continue;
+            }
             DungeonInstance instance = plugin.getDungeonManager().getInstance(dungeon.getId());
             long cooldown = plugin.getDungeonManager().getCooldownRemaining(player, dungeon);
             Map<String, String> ph = new LinkedHashMap<>();
@@ -195,11 +211,14 @@ public final class GuiManager {
             ph.put("max_players", String.valueOf(dungeon.getSettings().getMaxPlayers()));
             ph.put("cooldown", cooldown <= 0 ? "Disponible"
                     : plugin.getPlaceholderService().formatDuration(cooldown));
+            ph.put("available", cooldown > 0 ? "No (cooldown)" : dungeon.isReady() ? "Si" : "No");
             ph.put("world", dungeon.getRegion() == null ? "-" : dungeon.getRegion().getWorldName());
             entries.add(new ListEntry(dungeon.getId(), ph));
+            templates.add(cooldown > 0 ? "dungeon-entry-cooldown"
+                    : instance != null && instance.isRunning()
+                    ? "dungeon-entry-active" : "dungeon-entry-available");
         }
-        fillDynamic(inventory, holder, "player-dungeons", "dungeon-entry", entries,
-                "player.dungeon.entry");
+        fillPlayerDynamic(inventory, holder, entries, templates);
         navigation(inventory, holder, "player-dungeons", "main", page);
         open(player, inventory);
     }
@@ -1972,14 +1991,15 @@ public final class GuiManager {
 
     private Inventory create(GuiHolder holder) {
         String menu = holder.getMenu();
+        GuiConfig source = menuConfig(menu);
         Dungeon dungeon = dungeon(holder.getDungeonId());
         Map<String, String> titlePlaceholders = titlePlaceholders(menu, dungeon, holder.getTargetId());
-        Inventory inventory = Bukkit.createInventory(holder, config.size(menu),
-                Text.parse(config.title(menu, titlePlaceholders)));
+        Inventory inventory = Bukkit.createInventory(holder, source.size(menu),
+                Text.parse(source.title(menu, titlePlaceholders)));
         holder.setInventory(inventory);
-        GuiConfig.ItemSpec fill = config.fill(menu);
+        GuiConfig.ItemSpec fill = source.fill(menu);
         if (fill != null) {
-            ItemStack item = build(fill, Map.of());
+            ItemStack item = build(source, fill, Map.of());
             if (item != null) {
                 for (int slot = 0; slot < inventory.getSize(); slot++) {
                     inventory.setItem(slot, item.clone());
@@ -1996,11 +2016,12 @@ public final class GuiManager {
 
     private void button(Inventory inventory, GuiHolder holder, String menu, String key,
                         String action, Map<String, String> placeholders) {
-        GuiConfig.ItemSpec spec = config.item(menu, key);
+        GuiConfig source = menuConfig(menu);
+        GuiConfig.ItemSpec spec = source.item(menu, key);
         if (spec == null || spec.slot() < 0 || spec.slot() >= inventory.getSize()) {
             return;
         }
-        ItemStack item = build(spec, placeholders);
+        ItemStack item = build(source, spec, placeholders);
         if (item != null) {
             inventory.setItem(spec.slot(), item);
             holder.bind(spec.slot(), action);
@@ -2009,11 +2030,12 @@ public final class GuiManager {
 
     private void fillDynamic(Inventory inventory, GuiHolder holder, String menu, String templateKey,
                              List<ListEntry> entries, String action) {
-        GuiConfig.ItemSpec template = config.item(menu, templateKey);
+        GuiConfig source = menuConfig(menu);
+        GuiConfig.ItemSpec template = source.item(menu, templateKey);
         if (template == null) {
             return;
         }
-        List<Integer> slots = config.listSlots(menu);
+        List<Integer> slots = source.listSlots(menu);
         if (slots.isEmpty()) {
             return;
         }
@@ -2023,13 +2045,13 @@ public final class GuiManager {
             start = Math.max(0, (entries.size() - 1) / perPage * perPage);
         }
         if (entries.isEmpty()) {
-            GuiConfig.ItemSpec empty = config.item(menu, "empty");
+            GuiConfig.ItemSpec empty = source.item(menu, "empty");
             if (empty == null) {
                 empty = template;
             }
             Map<String, String> ph = new HashMap<>();
             ph.put("total", "0");
-            ItemStack item = build(empty, ph);
+            ItemStack item = build(source, empty, ph);
             if (item != null) {
                 inventory.setItem(slots.get(0), item);
             }
@@ -2041,13 +2063,52 @@ public final class GuiManager {
                 break;
             }
             ListEntry entry = entries.get(index);
-            ItemStack item = build(template, entry.placeholders());
+            ItemStack item = build(source, template, entry.placeholders());
             if (item == null) {
                 continue;
             }
             int slot = slots.get(slotIndex);
             inventory.setItem(slot, item);
             holder.bind(slot, action + "|" + entry.id());
+        }
+    }
+
+    private void fillPlayerDynamic(Inventory inventory, GuiHolder holder,
+                                   List<ListEntry> entries, List<String> templateKeys) {
+        GuiConfig source = playerConfig;
+        List<Integer> slots = source.listSlots("player-dungeons");
+        if (slots.isEmpty()) {
+            return;
+        }
+        if (entries.isEmpty()) {
+            GuiConfig.ItemSpec empty = source.item("player-dungeons", "empty");
+            ItemStack item = build(source, empty, Map.of("total", "0"));
+            if (item != null) {
+                inventory.setItem(slots.get(0), item);
+            }
+            return;
+        }
+        int start = holder.getPage() * slots.size();
+        if (start >= entries.size() && holder.getPage() > 0) {
+            start = Math.max(0, (entries.size() - 1) / slots.size() * slots.size());
+        }
+        for (int index = start; index < entries.size(); index++) {
+            int slotIndex = index - start;
+            if (slotIndex >= slots.size()) {
+                break;
+            }
+            String key = index < templateKeys.size() ? templateKeys.get(index) : "dungeon-entry";
+            GuiConfig.ItemSpec spec = source.item("player-dungeons", key);
+            if (spec == null) {
+                spec = source.item("player-dungeons", "dungeon-entry");
+            }
+            ItemStack item = build(source, spec, entries.get(index).placeholders());
+            if (item == null) {
+                continue;
+            }
+            int slot = slots.get(slotIndex);
+            inventory.setItem(slot, item);
+            holder.bind(slot, "player.dungeon.entry|" + entries.get(index).id());
         }
     }
 
@@ -2061,25 +2122,42 @@ public final class GuiManager {
         button(inventory, holder, menu, "back", "open|" + returnMenu, ph);
     }
 
+    private GuiConfig menuConfig(String menu) {
+        return "player-dungeons".equals(menu) ? playerConfig : config;
+    }
+
     private ItemStack build(GuiConfig.ItemSpec spec, Map<String, String> placeholders) {
+        return build(config, spec, placeholders);
+    }
+
+    private ItemStack build(GuiConfig source, GuiConfig.ItemSpec spec,
+                            Map<String, String> placeholders) {
         if (spec == null) {
             return null;
         }
         Map<String, String> ph = placeholders == null ? Map.of() : placeholders;
-        Material material = config.material(config.apply(spec.material(), ph), Material.STONE);
-        if (material == Material.AIR) {
-            return null;
+        String materialName = source.apply(spec.material(), ph);
+        ItemStack provided = providerItem(spec.provider(), spec.itemId(), materialName);
+        ItemStack stack;
+        if (provided != null) {
+            stack = provided;
+            stack.setAmount(Math.max(1, Math.min(64, spec.amount())));
+        } else {
+            Material material = source.material(materialName, Material.STONE);
+            if (material == Material.AIR) {
+                return null;
+            }
+            stack = new ItemStack(material, Math.max(1, Math.min(64, spec.amount())));
         }
-        ItemStack stack = new ItemStack(material, Math.max(1, Math.min(64, spec.amount())));
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) {
             return stack;
         }
-        String name = config.apply(spec.name(), ph);
+        String name = source.apply(spec.name(), ph);
         meta.displayName(Text.parse(name == null || name.isBlank() ? " " : name));
         List<Component> lore = new ArrayList<>();
         for (String line : spec.lore()) {
-            lore.add(Text.parse(config.apply(line, ph)));
+            lore.add(Text.parse(source.apply(line, ph)));
         }
         if (!lore.isEmpty()) {
             meta.lore(lore);
@@ -2088,8 +2166,41 @@ public final class GuiManager {
         if (spec.glow()) {
             meta.setEnchantmentGlintOverride(true);
         }
+        if (spec.customModelData() != null) {
+            meta.setCustomModelData(spec.customModelData());
+        }
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    private ItemStack providerItem(String provider, String itemId, String material) {
+        String selectedProvider = provider == null ? "" : provider.trim().toLowerCase(Locale.ROOT);
+        String selectedId = itemId == null ? "" : itemId.trim();
+        if (selectedId.isEmpty() && material != null) {
+            int separator = material.indexOf(':');
+            if (separator > 0) {
+                selectedProvider = material.substring(0, separator).toLowerCase(Locale.ROOT);
+                selectedId = material.substring(separator + 1);
+            }
+        }
+        if (selectedId.isEmpty()) {
+            return null;
+        }
+        try {
+            if (selectedProvider.equals("nexo")) {
+                Class<?> api = Class.forName("com.nexomc.nexo.api.NexoItems");
+                Object result = api.getMethod("itemFromId", String.class).invoke(null, selectedId);
+                return result instanceof ItemStack item ? item : null;
+            }
+            if (selectedProvider.equals("oraxen")) {
+                Class<?> api = Class.forName("io.th0rgal.oraxen.api.OraxenItems");
+                Object result = api.getMethod("getItemById", String.class).invoke(null, selectedId);
+                return result instanceof ItemStack item ? item : null;
+            }
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            // El proveedor es opcional; si no existe se usa material vanilla.
+        }
+        return null;
     }
 
     private void open(Player player, Inventory inventory) {

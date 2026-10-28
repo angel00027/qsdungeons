@@ -101,7 +101,7 @@ desactivan las funciones que dependen de ellas).
 
 1. Coloca `QSDungeons-1.0.0.jar` en la carpeta `plugins/`.
 2. Inicia el servidor una vez para generar `plugins/QSDungeons/`.
-3. Edita `config.yml`, `messages.yml` y `menus.yml` a tu gusto.
+3. Edita `config.yml`, `messages.yml`, `menus.yml` y `player-menus.yml` a tu gusto.
 4. Crea tu primera dungeon con los comandos de la sección
    [Inicio rápido](#inicio-rápido).
 5. Usa `/dungeon reload` después de editar archivos a mano. Las claves nuevas
@@ -119,6 +119,7 @@ plugins/QSDungeons/
 ├── config.yml
 ├── messages.yml
 ├── menus.yml                 # textos, items y layouts del editor gráfico
+├── player-menus.yml          # menú independiente para jugadores
 ├── data/
 │   └── cooldowns.yml
 ├── exports/                  # .zip generados por /dungeon export
@@ -341,15 +342,17 @@ El editor funciona con inventarios de Bukkit (`InventoryHolder`) y está pensado
 para no tener que memorizar comandos. Abre el menú principal con:
 
 ```text
-/dungeon gui          # menú principal
-/dungeon gui <id>     # editor directo de una dungeon
+/dungeon gui          # editor principal (solo administradores)
+/dungeon gui <id>     # editor directo de una dungeon (solo administradores)
+/dungeon menu         # menú de acceso para jugadores
 ```
 
 Menús disponibles:
 
 | Menú | Qué permite |
 |---|---|
-| Principal | Ver/editar dungeons, entrar como jugador, crear una nueva o recargar la configuración. |
+| Principal | Editor administrativo: ver/editar dungeons, crear una nueva o recargar la configuración. |
+| Dungeons disponibles | Menú de jugadores: muestra únicamente dungeons habilitadas y permite entrar mediante clic. |
 | Dungeons disponibles | Consultar estado, jugadores, disponibilidad y cooldown; clic para entrar. |
 | Lista de dungeons | Editar, activar/desactivar o borrar (Shift + clic derecho). |
 | Editor de dungeon | Ajustes, spawns, jefes, loot, cofres, premios, región, entrada/salida, iniciar/parar/reiniciar. |
@@ -400,15 +403,56 @@ cantidad y brillo, o desactivarlas con `enabled: false`. Todos los textos usan
 `{players}`, `{spawn}`, `{boss}`, `{chest}`, `{loot}`, `{value}` o
 `{location}`.
 
-`/dungeon reload` vuelve a leer `menus.yml` (y cierra las partidas activas,
+### `player-menus.yml`
+
+Este archivo controla únicamente `/dungeon menu`; no modifica el editor
+administrativo. Solo lista dungeons con `enabled: true` y permite usar un item
+distinto según el estado:
+
+Puedes controlar qué dungeons aparecen:
+
+```yaml
+dungeons:
+  mode: whitelist # all, whitelist o blacklist
+  ids:
+    - dungeon_principal
+    - dungeon_evento
+```
+
+`all` muestra todas las dungeons habilitadas, `whitelist` solo muestra los IDs
+indicados y `blacklist` oculta los IDs indicados.
+
+- `dungeon-entry-available`: lista para entrar.
+- `dungeon-entry-active`: instancia activa.
+- `dungeon-entry-cooldown`: cooldown del jugador.
+- `dungeon-entry`: plantilla de respaldo.
+
+Placeholders: `{dungeon}`, `{name}`, `{state}`, `{players}`, `{max_players}`,
+`{enabled}`, `{ready}`, `{available}`, `{cooldown}` y `{world}`. Cada item acepta
+`material`, `name`, `lore`, `amount`, `glow` y `custom-model-data`.
+
+También admite items de Nexo y Oraxen:
+
+```yaml
+      dungeon-entry-active:
+        provider: NEXO
+        item-id: dungeon_activa
+        material: PAPER
+        name: "<gold>{name}</gold>"
+```
+
+Usa `provider: ORAXEN` para Oraxen. Si el plugin o el ID no existe, se utiliza
+el `material` configurado como respaldo.
+
+`/dungeon reload` vuelve a leer `menus.yml` y `player-menus.yml` (y cierra las partidas activas,
 igual que el resto de la recarga en caliente).
 
 ### Actualizador automático de claves
 
 QSDungeons compara los archivos existentes con las plantillas incluidas en el
 JAR al iniciar y al ejecutar `/dungeon reload`. Si una versión nueva añade una
-clave, se copia únicamente esa clave a `config.yml`, `messages.yml` o
-`menus.yml`; los valores existentes no se reemplazan. Así puedes actualizar el
+clave, se copia únicamente esa clave a `config.yml`, `messages.yml`,
+`menus.yml` o `player-menus.yml`; los valores existentes no se reemplazan. Así puedes actualizar el
 plugin sin perder traducciones, colores ni ajustes propios. Se registra en la
 consola qué archivo recibió claves nuevas.
 

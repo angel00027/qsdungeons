@@ -50,7 +50,8 @@ public final class DungeonCommand implements CommandExecutor {
             case "stop" -> stop(sender, args);
             case "reset" -> reset(sender, args);
             case "reload" -> reload(sender);
-            case "gui", "menu" -> gui(sender, args);
+            case "gui" -> adminGui(sender, args);
+            case "menu" -> playerMenu(sender);
             default -> {
                 if (isAdminSubcommand(sub)) {
                     if (!requireAdmin(sender)) {
@@ -228,7 +229,7 @@ public final class DungeonCommand implements CommandExecutor {
         plugin.getMessages().send(sender, "general.reloaded");
     }
 
-    private void gui(CommandSender sender, String[] args) {
+    private void adminGui(CommandSender sender, String[] args) {
         if (!requireAdmin(sender)) {
             return;
         }
@@ -246,6 +247,13 @@ public final class DungeonCommand implements CommandExecutor {
             return;
         }
         plugin.getGuiManager().openMain(player);
+    }
+
+    private void playerMenu(CommandSender sender) {
+        Player player = player(sender);
+        if (player != null) {
+            plugin.getGuiManager().openPlayerDungeons(player, 0);
+        }
     }
 
     private Player player(CommandSender sender) {

@@ -69,14 +69,6 @@ menus:
           - "<gray>Ver y editar todas las dungeons."
           - "<dark_gray>Clic para abrir"
         glow: true
-      join:
-        slot: 12
-        material: ENDER_PEARL
-        name: "<green><bold>Entrar a una dungeon</bold></green>"
-        lore:
-          - "<gray>Consulta el estado y jugadores conectados."
-          - "<gray>También muestra tu cooldown."
-          - "<dark_gray>Clic para ver y entrar"
       create:
         slot: 13
         material: EMERALD_BLOCK
@@ -95,42 +87,6 @@ menus:
         slot: 22
         material: BARRIER
         name: "<red><bold>Cerrar</bold></red>"
-
-  player-dungeons:
-    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Dungeons disponibles</bold></gradient>"
-    size: 54
-    list-slots: "10-16,19-25,28-34"
-    items:
-      fill:
-        material: BLACK_STAINED_GLASS_PANE
-        name: " "
-      dungeon-entry:
-        material: MAP
-        name: "<aqua><bold>{name}</bold></aqua>"
-        lore:
-          - "<dark_gray>ID: <white>{dungeon}</white>"
-          - "<gray>Estado: <white>{state}</white>"
-          - "<gray>Activa: <white>{enabled}</white>"
-          - "<gray>Jugadores: <white>{players}/{max_players}</white>"
-          - "<gray>Cooldown: <white>{cooldown}</white>"
-          - "<gray>Lista: <white>{ready}</white>"
-          - ""
-          - "<green>Clic para entrar"
-      empty:
-        material: BARRIER
-        name: "<red>No hay dungeons disponibles</red>"
-      prev:
-        slot: 45
-        material: ARROW
-        name: "<gray><bold>Pagina anterior</bold>"
-      next:
-        slot: 53
-        material: ARROW
-        name: "<gray><bold>Pagina siguiente</bold>"
-      back:
-        slot: 49
-        material: OAK_DOOR
-        name: "<gray><bold>Volver</bold>"
 
   dungeon-list:
     title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Dungeons</bold></gradient>"

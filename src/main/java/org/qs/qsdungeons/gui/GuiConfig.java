@@ -16,19 +16,26 @@ import java.util.Map;
  * Carga menus.yml. Todos los textos, materiales, slots y lore del GUI se
  * pueden cambiar sin recompilar el plugin.
  */
-public final class GuiConfig {
+public class GuiConfig {
 
     private final QsDungeons plugin;
     private File file;
     private YamlConfiguration yaml;
+    private final String resourceName;
 
     public GuiConfig(QsDungeons plugin) {
         this.plugin = plugin;
+        this.resourceName = "menus.yml";
+    }
+
+    public GuiConfig(QsDungeons plugin, String resourceName) {
+        this.plugin = plugin;
+        this.resourceName = resourceName;
     }
 
     public void load() {
-        file = new File(plugin.getDataFolder(), "menus.yml");
-        YamlDefaultsUpdater.update(plugin, "menus.yml");
+        file = new File(plugin.getDataFolder(), resourceName);
+        YamlDefaultsUpdater.update(plugin, resourceName);
         yaml = YamlConfiguration.loadConfiguration(file);
     }
 
@@ -54,6 +61,14 @@ public final class GuiConfig {
 
     public int getInt(String path, int fallback) {
         return yaml == null ? fallback : yaml.getInt(path, fallback);
+    }
+
+    public String getString(String path, String fallback) {
+        return yaml == null ? fallback : yaml.getString(path, fallback);
+    }
+
+    public List<String> getStringList(String path) {
+        return yaml == null ? List.of() : yaml.getStringList(path);
     }
 
     public String title(String menu, Map<String, String> placeholders) {
@@ -87,7 +102,10 @@ public final class GuiConfig {
                 section.getString("name", ""),
                 section.getStringList("lore"),
                 Math.max(1, section.getInt("amount", 1)),
-                section.getBoolean("glow", false));
+                section.getBoolean("glow", false),
+                section.contains("custom-model-data") ? section.getInt("custom-model-data") : null,
+                section.getString("provider", ""),
+                section.getString("item-id", ""));
     }
 
     public ItemSpec fill(String menu) {
@@ -170,6 +188,7 @@ public final class GuiConfig {
      * para listas dinamicas.
      */
     public record ItemSpec(String key, int slot, String material, String name,
-                           List<String> lore, int amount, boolean glow) {
+                           List<String> lore, int amount, boolean glow,
+                           Integer customModelData, String provider, String itemId) {
     }
 }
