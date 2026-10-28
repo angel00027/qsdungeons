@@ -56,6 +56,11 @@ desactivan las funciones que dependen de ellas).
   de `config.yml`, `messages.yml` y `menus.yml` se agregan sin sobrescribir tus
   valores personalizados.
 - **Protección configurable de cofres** mediante `allow-chest-break`.
+- **Protección contra teletransportes durante el cooldown**: los jugadores que
+  intenten entrar a una región con cooldown pueden ser expulsados a una ubicación
+  segura configurable.
+- **Protección contra roturas accidentales de administradores**: el permiso de
+  bypass de bloques se puede activar o desactivar con un toggle.
 - **Cada dungeon en su propia carpeta**, con ID, jefes y loot separados.
 - **Exportar/importar** configuración en `.zip` y estructuras con WorldEdit.
 
@@ -73,7 +78,7 @@ desactivan las funciones que dependen de ellas).
 
 1. Coloca `QSDungeons-1.0.0.jar` en la carpeta `plugins/`.
 2. Inicia el servidor una vez para generar `plugins/QSDungeons/`.
-3. Edita `config.yml`, `messages.yml` y `menus.yml` a tu gusto.
+3. Edita `config.yml`, `messages.yml`, `menus.yml` y `player-menus.yml` a tu gusto.
 4. Crea tu primera dungeon con los comandos de la sección
    [Inicio rápido](#inicio-rápido).
 5. Usa `/dungeon reload` después de editar archivos a mano. Las claves nuevas
@@ -91,6 +96,7 @@ plugins/QSDungeons/
 ├── config.yml
 ├── messages.yml
 ├── menus.yml                 # textos, items y layouts del editor gráfico
+├── player-menus.yml          # menú independiente para jugadores
 ├── data/
 │   └── cooldowns.yml
 ├── exports/                  # .zip generados por /dungeon export
@@ -159,6 +165,10 @@ Alias del comando: `/dungeons`, `/qsd`, `/qsdungeons`.
 | `/dungeon region <id>` | Guarda la región marcada. |
 | `/dungeon entry <id>` | Guarda tu posición como entrada. |
 | `/dungeon exit <id>` | Guarda tu posición como salida. |
+| `/dungeon cooldown-location` | Guarda tu posición como ubicación de expulsión por cooldown. |
+| `/dungeon cooldown-location clear` | Elimina la ubicación de expulsión configurada. |
+| `/dungeon cooldown-protection [on\|off\|toggle]` | Activa o desactiva la expulsión de jugadores con cooldown. |
+| `/dungeon protection [on\|off\|toggle]` | Activa o desactiva el bypass de protección para administradores. |
 | `/dungeon set <id> [ajuste] [valor]` | Ver o cambiar ajustes de la dungeon. |
 | `/dungeon gui [id]` | Abre el editor gráfico (menú principal o editor de una dungeon). |
 | `/dungeon start <id>` / `stop <id>` / `reset <id>` | Controla la instancia. |
@@ -293,13 +303,62 @@ entrega la tabla configurada y después se restaura según sus opciones.
 
 ---
 
+### Protección por cooldown y ubicación de expulsión
+
+Para impedir que un jugador con cooldown entre mediante `/tp`, `/home`,
+`/warp`, ender pearl u otro teletransporte:
+
+1. Colócate en el punto seguro al que quieres enviarlo.
+2. Ejecuta:
+
+```text
+/dungeon cooldown-location
+```
+
+3. Activa la protección:
+
+```text
+/dungeon cooldown-protection on
+```
+
+También puedes usar `off` o `toggle`. La ubicación se guarda automáticamente en
+`config.yml`. Para eliminarla usa `/dungeon cooldown-location clear`.
+
+La protección solo se aplica a jugadores que tengan cooldown activo para esa
+dungeon. Los administradores y jugadores con `qsdungeons.cooldown.bypass` no son
+expulsados.
+
+### Protección contra roturas accidentales
+
+Las regiones protegidas bloquean romper y colocar bloques. Aunque un jugador
+tenga `qsdungeons.admin.bypass`, el bypass está desactivado por defecto para
+evitar daños accidentales a las estructuras.
+
+Para permitir temporalmente que ese permiso ignore la protección:
+
+```text
+/dungeon protection on
+```
+
+Para volver a bloquearlo:
+
+```text
+/dungeon protection off
+```
+
+`/dungeon protection toggle` alterna ambos estados. Esto no desactiva la
+protección de las dungeons; únicamente controla si el permiso administrativo
+puede ignorarla.
+
+---
+
 ## Permisos
 
 | Permiso | Por defecto | Descripción |
 |---|---|---|
 | `qsdungeons.use` | `true` | Usar `/dungeon` y entrar a dungeons. |
 | `qsdungeons.admin` | `op` | Administrar dungeons, jefes, loot y regiones. |
-| `qsdungeons.admin.bypass` | `op` | Ignorar la protección de bloques. |
+| `qsdungeons.admin.bypass` | `op` | Ignorar la protección de bloques cuando `/dungeon protection on` está activo. |
 | `qsdungeons.cooldown.bypass` | `op` | Ignorar el cooldown de reentrada. |
 
 Además, cada dungeon puede exigir un permiso extra con
@@ -393,6 +452,19 @@ settings:
   default-world: world            # Mundo usado al crear dungeons
   bossbar-update-ticks: 20        # Actualizacion de bossbars; 20 = 1 segundo
   default-near-radius: 64         # Radio global por defecto
+
+cooldown-protection:
+  enabled: false                  # Expulsa a jugadores con cooldown dentro de regiones
+  location:                       # Se guarda con /dungeon cooldown-location
+    world: world
+    x: 0.5
+    y: 100.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+protection:
+  admin-bypass: false             # Permite qsdungeons.admin.bypass ignorar protección
 
 loot:
   fill-chests-on-start: true      # Rellenar cofres al comenzar
@@ -772,4 +844,4 @@ Dependencias opcionales usadas en tiempo de compilación (todas `provided`):
 - **Una instancia por dungeon**: todos los jugadores comparten la misma
   instancia; el estado se reinicia al quedarse vacía (si `reset-on-empty`).
 - **Recarga en caliente**: `/dungeon reload` recarga `config.yml`,
-  `messages.yml`, `menus.yml` y todas las dungeons desde disco.  
+  `messages.yml`, `menus.yml` y todas las dungeons desde disco.
