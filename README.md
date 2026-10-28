@@ -188,7 +188,7 @@ Ajustes de spawn: `type`, `entity`, `mythic`, `amount`, `max-alive`,
 `respawn-seconds`, `spawn-interval-seconds`, `radius`, `min-player-distance`,
 `require-ground`, `health`, `damage`, `speed`, `follow-range`, `name`, `glowing`,
 `baby`, `ai`, `persistent`, `clear-vanilla-drops`, `loot-table`,
-`burn-in-daylight`, `location` y `equipment.<slot>`.
+`burn-in-daylight`, `location` y `equipment.<slot>`. 
 
 `burn-in-daylight: false` evita que los mobs del spawn ardan por el sol. Para
 configurar equipo usa `head`, `chest`, `legs`, `feet`, `hand` u `off-hand`:
