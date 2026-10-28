@@ -13,6 +13,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitTask;
 import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.boss.BossDefinition;
 import org.qs.qsdungeons.dungeon.BossBarSettings;
@@ -80,6 +81,7 @@ public final class GuiManager {
     private final GuiConfig playerConfig;
     private final Map<UUID, Prompt> prompts = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<UUID, Location[]> corners = new HashMap<>();
+    private final Map<UUID, BukkitTask> playerMenuTasks = new java.util.concurrent.ConcurrentHashMap<>();
 
     public GuiManager(QsDungeons plugin) {
         this.plugin = plugin;
@@ -184,6 +186,12 @@ public final class GuiManager {
     public void openPlayerDungeons(Player player, int page) {
         GuiHolder holder = new GuiHolder("player-dungeons", null, null, page);
         Inventory inventory = create(holder);
+        renderPlayerDungeons(player, holder, inventory);
+        open(player, inventory);
+        startPlayerMenuRefresh(player);
+    }
+
+    private void renderPlayerDungeons(Player player, GuiHolder holder, Inventory inventory) {
         List<ListEntry> entries = new ArrayList<>();
         List<String> templates = new ArrayList<>();
         String dungeonMode = playerConfig.getString("dungeons.mode", "all")
@@ -218,9 +226,39 @@ public final class GuiManager {
                     : instance != null && instance.isRunning()
                     ? "dungeon-entry-active" : "dungeon-entry-available");
         }
+        holder.clearActions();
+        for (int slot : playerConfig.listSlots("player-dungeons")) {
+            if (slot >= 0 && slot < inventory.getSize()) {
+                inventory.setItem(slot, null);
+            }
+        }
         fillPlayerDynamic(inventory, holder, entries, templates);
-        navigation(inventory, holder, "player-dungeons", "main", page);
-        open(player, inventory);
+        navigation(inventory, holder, "player-dungeons", "main", holder.getPage());
+    }
+
+    private void startPlayerMenuRefresh(Player player) {
+        stopPlayerMenuRefresh(player);
+        UUID uuid = player.getUniqueId();
+        BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline()
+                    || !(player.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder holder)
+                    || !holder.getMenu().equals("player-dungeons")) {
+                stopPlayerMenuRefresh(player);
+                return;
+            }
+            renderPlayerDungeons(player, holder, holder.getInventory());
+        }, 20L, 20L);
+        playerMenuTasks.put(uuid, task);
+    }
+
+    public void stopPlayerMenuRefresh(Player player) {
+        if (player == null) {
+            return;
+        }
+        BukkitTask task = playerMenuTasks.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+        }
     }
 
     public void openDungeonList(Player player, int page) {

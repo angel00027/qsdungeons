@@ -113,6 +113,11 @@ public final class GuiListener implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
+        if (event.getPlayer() instanceof Player player
+                && event.getInventory().getHolder() instanceof GuiHolder holder
+                && holder.getMenu().equals("player-dungeons")) {
+            plugin.getGuiManager().stopPlayerMenuRefresh(player);
+        }
         if (event.getInventory().getHolder() instanceof GuiHolder holder
                 && holder.getMenu().equals("equipment")) {
             plugin.getGuiManager().saveEquipment(holder);
@@ -152,6 +157,7 @@ public final class GuiListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        plugin.getGuiManager().stopPlayerMenuRefresh(event.getPlayer());
         plugin.getGuiManager().clearPrompt(event.getPlayer());
     }
 }

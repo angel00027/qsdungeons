@@ -58,6 +58,10 @@ public final class GuiHolder implements InventoryHolder {
         }
     }
 
+    public void clearActions() {
+        actions.clear();
+    }
+
     public String actionAt(int slot) {
         return actions.get(slot);
     }
