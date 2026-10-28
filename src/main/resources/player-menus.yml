@@ -1,0 +1,73 @@
+# Menus visibles para jugadores. Este archivo es independiente de menus.yml.
+# Solo se muestran las dungeons habilitadas por el plugin y permitidas abajo.
+dungeons:
+  mode: all # all, whitelist o blacklist
+  ids: []  # IDs usados por whitelist/blacklist
+
+menus:
+  player-dungeons:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Dungeons disponibles</bold></gradient>"
+    size: 54
+    list-slots: "10-16,19-25,28-34"
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      dungeon-entry:
+        material: MAP
+        name: "<aqua><bold>{name}</bold></aqua>"
+        lore:
+          - "<gray>Estado: <white>{state}</white>"
+          - "<gray>Jugadores: <white>{players}/{max_players}</white>"
+          - "<gray>Disponible: <white>{available}</white>"
+          - "<gray>Cooldown: <white>{cooldown}</white>"
+          - ""
+          - "<green>Clic para entrar"
+      dungeon-entry-available:
+        material: LIME_CONCRETE
+        name: "<green><bold>{name}</bold></green>"
+        lore:
+          - "<gray>Estado: <white>{state}</white>"
+          - "<green>Disponible para entrar"
+          - "<gray>Jugadores: <white>{players}/{max_players}</white>"
+          - "<dark_gray>Clic para entrar"
+      dungeon-entry-active:
+        material: GOLD_BLOCK
+        name: "<gold><bold>{name}</bold></gold>"
+        lore:
+          - "<gray>Estado: <white>{state}</white>"
+          - "<yellow>Dungeon activa"
+          - "<gray>Jugadores: <white>{players}/{max_players}</white>"
+          - "<dark_gray>Clic para unirte"
+      dungeon-entry-cooldown:
+        material: RED_CONCRETE
+        name: "<red><bold>{name}</bold></red>"
+        lore:
+          - "<gray>Estado: <white>{state}</white>"
+          - "<red>Cooldown: <white>{cooldown}</white>"
+          - "<gray>Podrás entrar después"
+          - "<dark_gray>Clic para intentar entrar"
+      empty:
+        material: BARRIER
+        name: "<red>No hay dungeons habilitadas</red>"
+        lore: ["<gray>Vuelve a intentarlo más tarde."]
+      prev:
+        slot: 45
+        material: ARROW
+        name: "<gray><bold>Página anterior</bold>"
+      next:
+        slot: 53
+        material: ARROW
+        name: "<gray><bold>Página siguiente</bold>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+
+# Ejemplos de items de estado opcionales.
+# Puedes cambiar material, nombre, lore, custom-model-data o usar Nexo/Oraxen.
+# El item de dungeon-entry es el que se muestra actualmente.
+# provider: NEXO
+# item-id: mi_item
+# provider: ORAXEN
+# item-id: mi_item
