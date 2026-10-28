@@ -85,7 +85,8 @@ public final class DungeonProtectionListener implements Listener {
         if (player == null || block == null) {
             return false;
         }
-        if (player.hasPermission("qsdungeons.admin.bypass")) {
+        if (player.hasPermission("qsdungeons.admin.bypass")
+                && plugin.getConfig().getBoolean("protection.admin-bypass", false)) {
             return false;
         }
         if (!plugin.getDungeonManager().isProtected(block.getLocation())) {

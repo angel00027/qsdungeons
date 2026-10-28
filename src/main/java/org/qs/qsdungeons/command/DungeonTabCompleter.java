@@ -26,7 +26,8 @@ public final class DungeonTabCompleter implements TabCompleter {
     private static final List<String> BASE = List.of("help", "list", "info", "join", "leave", "menu");
     private static final List<String> ADMIN = List.of("create", "delete", "enable", "disable",
             "pos1", "pos2", "region", "entry", "exit", "spawn", "boss", "loot", "chest",
-            "reward", "set", "start", "stop", "reset", "reload", "gui");
+            "reward", "set", "start", "stop", "reset", "reload", "gui", "cooldown-location",
+            "cooldown-protection", "protection");
     private static final List<String> TRANSFER = List.of("export", "import", "save", "paste",
             "wand", "structures");
 
@@ -79,6 +80,12 @@ public final class DungeonTabCompleter implements TabCompleter {
             }
             case "menu" -> {
                 return List.of();
+            }
+            case "cooldown-location" -> {
+                return filter(List.of("clear"), args[args.length - 1]);
+            }
+            case "cooldown-protection", "protection" -> {
+                return filter(List.of("on", "off", "toggle"), args[args.length - 1]);
             }
             case "export" -> {
                 if (args.length == 2) {

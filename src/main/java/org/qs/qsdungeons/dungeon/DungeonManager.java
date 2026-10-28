@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.dungeon.instance.DungeonInstance;
+import org.qs.qsdungeons.storage.LocationSerializer;
 import org.qs.qsdungeons.util.Text;
 
 import java.io.File;
@@ -374,11 +375,19 @@ public final class DungeonManager {
         }
 
         for (Dungeon dungeon : dungeons.values()) {
-            if (!dungeon.isEnabled() || !dungeon.getSettings().isAutoEnter()
+            if (!dungeon.isEnabled()
                     || dungeon.getRegion() == null || !dungeon.isReady()) {
                 continue;
             }
             if (!dungeon.getRegion().contains(to)) {
+                continue;
+            }
+            if (!player.hasPermission("qsdungeons.cooldown.bypass") && !player.isOp()
+                    && getCooldownRemaining(player, dungeon) > 0) {
+                ejectCooldownPlayer(player, dungeon);
+                return;
+            }
+            if (!dungeon.getSettings().isAutoEnter()) {
                 continue;
             }
             String key = player.getUniqueId() + ":" + dungeon.getId();
@@ -391,6 +400,24 @@ public final class DungeonManager {
             join(player, dungeon);
             return;
         }
+    }
+
+    private void ejectCooldownPlayer(Player player, Dungeon dungeon) {
+        long cooldown = getCooldownRemaining(player, dungeon);
+        plugin.getMessages().send(player, "join.cooldown", Map.of(
+                "dungeon", dungeon.getId(),
+                "time", plugin.getPlaceholderService().formatDuration(cooldown)));
+        ConfigurationSection section = plugin.getConfig()
+                .getConfigurationSection("cooldown-protection");
+        if (section == null || !section.getBoolean("enabled", false)) {
+            return;
+        }
+        Location destination = LocationSerializer.read(section, "location");
+        if (destination == null || destination.getWorld() == null) {
+            return;
+        }
+        suppressAutoEnter(player, 3000L);
+        player.teleport(destination);
     }
 
     public void handleQuit(Player player) {

@@ -9,6 +9,7 @@ import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.dungeon.Dungeon;
 import org.qs.qsdungeons.dungeon.DungeonState;
 import org.qs.qsdungeons.dungeon.instance.DungeonInstance;
+import org.qs.qsdungeons.storage.LocationSerializer;
 
 import java.util.Locale;
 import java.util.Map;
@@ -52,6 +53,9 @@ public final class DungeonCommand implements CommandExecutor {
             case "reload" -> reload(sender);
             case "gui" -> adminGui(sender, args);
             case "menu" -> playerMenu(sender);
+            case "cooldown-location" -> cooldownLocation(sender, args);
+            case "cooldown-protection" -> cooldownProtection(sender, args);
+            case "protection" -> protection(sender, args);
             default -> {
                 if (isAdminSubcommand(sub)) {
                     if (!requireAdmin(sender)) {
@@ -254,6 +258,61 @@ public final class DungeonCommand implements CommandExecutor {
         if (player != null) {
             plugin.getGuiManager().openPlayerDungeons(player, 0);
         }
+    }
+
+    private void cooldownLocation(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        Player player = player(sender);
+        if (player == null) {
+            return;
+        }
+        if (args.length >= 2 && args[1].equalsIgnoreCase("clear")) {
+            plugin.getConfig().set("cooldown-protection.location", null);
+            plugin.saveConfig();
+            plugin.getMessages().sendRaw(sender, "<yellow>Ubicacion de cooldown eliminada.", null);
+            return;
+        }
+        var section = plugin.getConfig().getConfigurationSection("cooldown-protection.location");
+        if (section == null) {
+            section = plugin.getConfig().createSection("cooldown-protection.location");
+        }
+        LocationSerializer.write(section, player.getLocation());
+        plugin.saveConfig();
+        plugin.getMessages().sendRaw(sender, "<green>Ubicacion de expulsion guardada en tu posicion.", null);
+    }
+
+    private void cooldownProtection(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        boolean current = plugin.getConfig().getBoolean("cooldown-protection.enabled", false);
+        boolean enabled = args.length >= 2 && switch (args[1].toLowerCase(Locale.ROOT)) {
+            case "on", "enable", "true" -> true;
+            case "off", "disable", "false" -> false;
+            default -> !current;
+        };
+        plugin.getConfig().set("cooldown-protection.enabled", enabled);
+        plugin.saveConfig();
+        plugin.getMessages().sendRaw(sender, "<green>Expulsion por cooldown: "
+                + (enabled ? "<white>activada" : "<white>desactivada"), null);
+    }
+
+    private void protection(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        boolean current = plugin.getConfig().getBoolean("protection.admin-bypass", false);
+        boolean enabled = args.length >= 2 && switch (args[1].toLowerCase(Locale.ROOT)) {
+            case "on", "enable", "true" -> true;
+            case "off", "disable", "false" -> false;
+            default -> !current;
+        };
+        plugin.getConfig().set("protection.admin-bypass", enabled);
+        plugin.saveConfig();
+        plugin.getMessages().sendRaw(sender, "<green>Bypass de proteccion para administradores: "
+                + (enabled ? "<white>activado" : "<white>desactivado"), null);
     }
 
     private Player player(CommandSender sender) {

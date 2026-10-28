@@ -16,6 +16,23 @@ settings:
   # Radio por defecto para mostrar una bossbar a los jugadores cercanos.
   default-near-radius: 64
 
+# Expulsa a jugadores con cooldown que entren por teletransporte a una dungeon.
+# La ubicacion solo se usa cuando enabled: true.
+cooldown-protection:
+  enabled: false
+  location:
+    world: world
+    x: 0.5
+    y: 100.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+# Permite que qsdungeons.admin.bypass ignore la proteccion de estructuras.
+# En false, ni siquiera los administradores con ese permiso pueden romperlas.
+protection:
+  admin-bypass: false
+
 # Sonidos de Bukkit. Deja el valor vacio ("") para desactivar.
 sounds:
   join: BLOCK_PORTAL_TRAVEL
