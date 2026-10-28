@@ -10,28 +10,6 @@ desactivan las funciones que dependen de ellas).
 
 ---
 
-## Cambios recientes
-
-### Actualización actual
-
-- Añadido menú de **dungeons disponibles para jugadores**, con estado, jugadores
-  conectados, capacidad, cooldown y entrada mediante clic.
-- Los tiempos aceptan formatos legibles como `1s`, `1m`, `1h`, `1d`, `1mes` y
-  combinaciones como `1m30s`.
-- Los mensajes y el GUI muestran tiempos legibles en segundos, minutos, horas,
-  días o meses.
-- Los objetos de loot y equipamiento se guardan en **Base64**, conservando NBT,
-  componentes, texturas, lore, nombres y encantamientos.
-- El loot colocado desde el GUI se guarda automáticamente y aparece de inmediato
-  en la lista.
-- Los cofres se rellenan al iniciar la dungeon, no al abrirlos y cerrarlos.
-- `respawn-seconds` y `refill-seconds` usan `0` por defecto.
-- La bossbar actualiza su total cuando aparecen mobs por respawn.
-- Se corrigieron listeners de inventario, botones del GUI y pérdidas de entradas
-  de loot al recargar o reiniciar.
-
----
-
 ## Índice
 
 1. [Características](#características)
@@ -61,18 +39,14 @@ desactivan las funciones que dependen de ellas).
   repartidas en el tiempo (`spawn-interval-seconds`), búsqueda de suelo seguro y
   distancia mínima a los jugadores.
 - **Loot** con probabilidad, peso, rango de cantidades, mensajes y comandos.
-- **Cofres** que se rellenan al iniciar (y opcionalmente se reabastecen). Abrir
-  y cerrar un cofre no genera loot nuevo. Su
+- **Cofres** que se rellenan al iniciar (y opcionalmente se reabastecen). Su
   `BlockData` original se guarda y se restaura en cada partida, así que romper
   un cofre no impide reclamar las recompensas en la siguiente.
 - **Bloques premiados** que entregan loot al romperse, se restauran solos y
   pueden ser de un solo uso o reaparecer tras un tiempo.
 - **Editor gráfico completo en español** (`/dungeon gui`) para dungeons,
   ajustes, spawns, jefes, loot, cofres y bloques premiados, con todos los textos,
-   materiales, slots y layouts configurables en `menus.yml`.
-- **Menú de acceso para jugadores**: permite consultar dungeons activas,
-  jugadores conectados, disponibilidad y cooldown, y entrar haciendo clic sin
-  escribir un comando.
+  materiales, slots y layouts configurables en `menus.yml`.
 - **Bossbars solo para jugadores cercanos**, con radio configurable por dungeon
   y por jefe; cada jugador tiene su propia barra (Adventure).
 - **Placeholders internos** (`{dungeon}`, `{kills}`, `{progress}`…) y expansión
@@ -83,8 +57,6 @@ desactivan las funciones que dependen de ellas).
   valores personalizados.
 - **Protección configurable de cofres** mediante `allow-chest-break`.
 - **Cada dungeon en su propia carpeta**, con ID, jefes y loot separados.
-- **Items completos en Base64**: loot y equipamiento conservan componentes,
-  NBT, texturas, nombres, lore y encantamientos, con guardado automático.
 - **Exportar/importar** configuración en `.zip` y estructuras con WorldEdit.
 
 ---
@@ -101,7 +73,7 @@ desactivan las funciones que dependen de ellas).
 
 1. Coloca `QSDungeons-1.0.0.jar` en la carpeta `plugins/`.
 2. Inicia el servidor una vez para generar `plugins/QSDungeons/`.
-3. Edita `config.yml`, `messages.yml`, `menus.yml` y `player-menus.yml` a tu gusto.
+3. Edita `config.yml`, `messages.yml` y `menus.yml` a tu gusto.
 4. Crea tu primera dungeon con los comandos de la sección
    [Inicio rápido](#inicio-rápido).
 5. Usa `/dungeon reload` después de editar archivos a mano. Las claves nuevas
@@ -119,7 +91,6 @@ plugins/QSDungeons/
 ├── config.yml
 ├── messages.yml
 ├── menus.yml                 # textos, items y layouts del editor gráfico
-├── player-menus.yml          # menú independiente para jugadores
 ├── data/
 │   └── cooldowns.yml
 ├── exports/                  # .zip generados por /dungeon export
@@ -342,18 +313,15 @@ El editor funciona con inventarios de Bukkit (`InventoryHolder`) y está pensado
 para no tener que memorizar comandos. Abre el menú principal con:
 
 ```text
-/dungeon gui          # editor principal (solo administradores)
-/dungeon gui <id>     # editor directo de una dungeon (solo administradores)
-/dungeon menu         # menú de acceso para jugadores
+/dungeon gui          # menú principal
+/dungeon gui <id>     # editor directo de una dungeon
 ```
 
 Menús disponibles:
 
 | Menú | Qué permite |
 |---|---|
-| Principal | Editor administrativo: ver/editar dungeons, crear una nueva o recargar la configuración. |
-| Dungeons disponibles | Menú de jugadores: muestra únicamente dungeons habilitadas y permite entrar mediante clic. |
-| Dungeons disponibles | Consultar estado, jugadores, disponibilidad y cooldown; clic para entrar. |
+| Principal | Ver dungeons, crear una nueva o recargar la configuración. |
 | Lista de dungeons | Editar, activar/desactivar o borrar (Shift + clic derecho). |
 | Editor de dungeon | Ajustes, spawns, jefes, loot, cofres, premios, región, entrada/salida, iniciar/parar/reiniciar. |
 | Ajustes | Todos los valores de `settings` (jugadores, tiempo, protección, bossbar, etc.). |
@@ -376,12 +344,6 @@ Controles habituales:
 - En el editor de **Loot**, arrastra un objeto a la ranura `Arrastra un item
   aqui`. Se añadirá automáticamente como una nueva entrada conservando
   sus encantamientos, nombre, lore y componentes.
-- En **Dungeons disponibles**, el cooldown se muestra en segundos, minutos,
-  horas, días o meses según el tiempo restante. Al hacer clic se usa la entrada
-  normal de la dungeon y se respeta `auto-start`, permisos, capacidad y cooldown.
-- `respawn-seconds: 0` y `refill-seconds: 0` son los valores predeterminados:
-  no reaparecen mobs, bloques premiados ni loot de cofres salvo que se configure
-  explícitamente un tiempo mayor que cero.
 - Los prompts de chat se cancelan también al escribir `cancelar`.
 
 ### `menus.yml`
@@ -403,56 +365,15 @@ cantidad y brillo, o desactivarlas con `enabled: false`. Todos los textos usan
 `{players}`, `{spawn}`, `{boss}`, `{chest}`, `{loot}`, `{value}` o
 `{location}`.
 
-### `player-menus.yml`
-
-Este archivo controla únicamente `/dungeon menu`; no modifica el editor
-administrativo. Solo lista dungeons con `enabled: true` y permite usar un item
-distinto según el estado:
-
-Puedes controlar qué dungeons aparecen:
-
-```yaml
-dungeons:
-  mode: whitelist # all, whitelist o blacklist
-  ids:
-    - dungeon_principal
-    - dungeon_evento
-```
-
-`all` muestra todas las dungeons habilitadas, `whitelist` solo muestra los IDs
-indicados y `blacklist` oculta los IDs indicados.
-
-- `dungeon-entry-available`: lista para entrar.
-- `dungeon-entry-active`: instancia activa.
-- `dungeon-entry-cooldown`: cooldown del jugador.
-- `dungeon-entry`: plantilla de respaldo.
-
-Placeholders: `{dungeon}`, `{name}`, `{state}`, `{players}`, `{max_players}`,
-`{enabled}`, `{ready}`, `{available}`, `{cooldown}` y `{world}`. Cada item acepta
-`material`, `name`, `lore`, `amount`, `glow` y `custom-model-data`.
-
-También admite items de Nexo y Oraxen:
-
-```yaml
-      dungeon-entry-active:
-        provider: NEXO
-        item-id: dungeon_activa
-        material: PAPER
-        name: "<gold>{name}</gold>"
-```
-
-Usa `provider: ORAXEN` para Oraxen. Si el plugin o el ID no existe, se utiliza
-el `material` configurado como respaldo.
-
-`/dungeon reload` vuelve a leer `menus.yml` y `player-menus.yml` (y cierra las partidas activas,
+`/dungeon reload` vuelve a leer `menus.yml` (y cierra las partidas activas,
 igual que el resto de la recarga en caliente).
 
 ### Actualizador automático de claves
 
 QSDungeons compara los archivos existentes con las plantillas incluidas en el
 JAR al iniciar y al ejecutar `/dungeon reload`. Si una versión nueva añade una
-clave, se copia únicamente esa clave a `config.yml`, `messages.yml`,
-`menus.yml` o `player-menus.yml`; los valores existentes no se reemplazan. Así puedes actualizar el
+clave, se copia únicamente esa clave a `config.yml`, `messages.yml` o
+`menus.yml`; los valores existentes no se reemplazan. Así puedes actualizar el
 plugin sin perder traducciones, colores ni ajustes propios. Se registra en la
 consola qué archivo recibió claves nuevas.
 
@@ -528,20 +449,20 @@ exit:                              # Lugar al que salen al terminar
 settings:
   max-players: 8                  # Maximo de jugadores simultaneos
   min-players: 1                  # Jugadores necesarios para iniciar automaticamente
-  time-limit-seconds: 30m         # Acepta 1s, 1m, 1h, 1d o 1mes; 0 = sin limite
+  time-limit-seconds: 1800        # Tiempo limite; 0 = sin limite
   auto-enter: true                # Entrar al pisar la region
   auto-start: true                # Iniciar al alcanzar min-players
   exit-on-leave-region: true      # Sacar al jugador si abandona la region
   leave-on-death: false           # Sacar al jugador cuando muere
   reset-on-empty: true            # Reiniciar si no queda ningun jugador
-  reset-delay-seconds: 10s        # Tiempo antes del reinicio por estar vacia
-  end-delay-seconds: 5s           # Tiempo de loot antes de teletransportar al terminar
+  reset-delay-seconds: 10         # Segundos antes del reinicio por estar vacia
+  end-delay-seconds: 5            # Segundos de loot antes de teletransportar al terminar
   allow-rejoin: true              # Permitir volver tras salir durante la partida
   protection: true                # Proteger bloques de la region
   allow-chest-break: false        # Permitir romper cofres registrados; se restauran despues
   bosses-after-waves: false       # false = jefes al inicio; true = jefes al acabar oleadas
   entry-permission: ""            # Permiso extra; vacio = no exigirlo
-  cooldown-seconds: 0             # Espera para volver; acepta 1h, 1d, 1mes; 0 = desactivado
+  cooldown-seconds: 0             # Espera para volver tras completar; 0 = desactivado
   complete-on: BOSSES             # BOSSES, KILLS, BOSSES_AND_KILLS o MANUAL
   required-kills: -1              # Kills necesarias; -1 = calcular automaticamente
   bossbar:
@@ -612,19 +533,6 @@ rewards:
 >   enemigos iniciales).
 > - `BOSSES_AND_KILLS`: ambas condiciones.
 > - `MANUAL`: solo con `/dungeon stop` o desde otro plugin.
-
-Los campos de tiempo aceptan segundos numéricos y formatos legibles combinados:
-
-```yaml
-cooldown-seconds: 1d
-time-limit-seconds: 30m
-reset-delay-seconds: 1m30s
-respawn-seconds: 2h
-refill-seconds: 1mes
-```
-
-Un mes se interpreta como 30 días. El GUI y los mensajes muestran los tiempos
-en formato legible (`45s`, `12m 30s`, `2h 10m`, `3d` o `1 mes`).
 
 ### `bosses/<bossId>.yml`
 
