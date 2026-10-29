@@ -1,5 +1,5 @@
 name: QSDungeons
-version: '${version}'
+version: '2.0.0'
 main: org.qs.qsdungeons.QsDungeons
 api-version: '1.21'
 authors: [QS]
