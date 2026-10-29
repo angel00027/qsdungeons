@@ -44,7 +44,7 @@ desactivan las funciones que dependen de ellas).
   un cofre no impide reclamar las recompensas en la siguiente.
 - **Bloques premiados** que entregan loot al romperse, se restauran solos y
   pueden ser de un solo uso o reaparecer tras un tiempo.
-- **Editor gráfico completo en español** (`/dungeon gui`) para dungeons,
+- **Editor gráfico completo en español** (`/dungeon editor`) para dungeons,
   ajustes, spawns, jefes, loot, cofres y bloques premiados, con todos los textos,
   materiales, slots y layouts configurables en `menus.yml`.
 - **Bossbars solo para jugadores cercanos**, con radio configurable por dungeon
@@ -153,6 +153,7 @@ Alias del comando: `/dungeons`, `/qsd`, `/qsdungeons`.
 | `/dungeon info [id]` | Información de una dungeon (o de la actual). |
 | `/dungeon join <id>` | Entra a una dungeon. |
 | `/dungeon leave` | Sale de la dungeon actual. |
+| `/dungeon menu` | Abre el menú de jugadores con las dungeons habilitadas. |
 
 ### Administración (`qsdungeons.admin`)
 
@@ -170,7 +171,7 @@ Alias del comando: `/dungeons`, `/qsd`, `/qsdungeons`.
 | `/dungeon cooldown-protection [on\|off\|toggle]` | Activa o desactiva la expulsión de jugadores con cooldown. |
 | `/dungeon protection [on\|off\|toggle]` | Activa o desactiva el bypass de protección para administradores. |
 | `/dungeon set <id> [ajuste] [valor]` | Ver o cambiar ajustes de la dungeon. |
-| `/dungeon gui [id]` | Abre el editor gráfico (menú principal o editor de una dungeon). |
+| `/dungeon editor [id]` | Abre el editor gráfico (menú principal o editor de una dungeon). |
 | `/dungeon start <id>` / `stop <id>` / `reset <id>` | Controla la instancia. |
 | `/dungeon reload` | Recarga configuración, mensajes y dungeons. |
 
@@ -372,8 +373,9 @@ El editor funciona con inventarios de Bukkit (`InventoryHolder`) y está pensado
 para no tener que memorizar comandos. Abre el menú principal con:
 
 ```text
-/dungeon gui          # menú principal
-/dungeon gui <id>     # editor directo de una dungeon
+/dungeon editor          # menú principal del editor
+/dungeon editor <id>     # editor directo de una dungeon
+/dungeon menu             # menú de acceso para jugadores
 ```
 
 Menús disponibles:

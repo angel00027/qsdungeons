@@ -51,7 +51,7 @@ public final class DungeonCommand implements CommandExecutor {
             case "stop" -> stop(sender, args);
             case "reset" -> reset(sender, args);
             case "reload" -> reload(sender);
-            case "gui" -> adminGui(sender, args);
+            case "editor" -> adminGui(sender, args);
             case "menu" -> playerMenu(sender);
             case "cooldown-location" -> cooldownLocation(sender, args);
             case "cooldown-protection" -> cooldownProtection(sender, args);
