@@ -41,6 +41,8 @@ messages:
   region-saved: "{prefix}<green>Region guardada para <white>{dungeon}</white>."
   position-set: "{prefix}<green>Posicion guardada para <white>{dungeon}</white>."
   error: "{prefix}<red>Ha ocurrido un error. Revisa la consola."
+  door-captured: "{prefix}<green>Puerta <white>{door}</white> guardada con <white>{blocks}</white> bloques."
+  door-too-big: "{prefix}<red>La puerta es demasiado grande (maximo <white>{max}</white> bloques) o las esquinas no estan en el mismo mundo."
 
 prompts:
   dungeon-id: "{prefix}<gray>Escribe el <white>ID</white> de la nueva dungeon en el chat. <dark_gray>(cancelar para salir)"
@@ -51,6 +53,9 @@ prompts:
   reward-id: "{prefix}<gray>Escribe el <white>ID</white> del nuevo bloque premiado para <white>{dungeon}</white>. <dark_gray>(cancelar para salir)"
   value: "{prefix}<gray>Ajuste <white>{key}</white> (actual: <white>{current}</white>). Escribe el nuevo valor. <dark_gray>(cancelar para salir)"
   rolls: "{prefix}<gray>Escribe las tiradas de <white>{loot}</white>. Ejemplo: <white>1-3</white> o <white>2</white>. <dark_gray>(cancelar para salir)"
+  door-id: "{prefix}<gray>Escribe el <white>ID</white> de la nueva puerta para <white>{dungeon}</white>. <dark_gray>(cancelar para salir)"
+  key-id: "{prefix}<gray>Escribe el <white>ID</white> de la nueva llave para <white>{dungeon}</white>. <dark_gray>(cancelar para salir)"
+  checkpoint-id: "{prefix}<gray>Escribe el <white>ID</white> del nuevo checkpoint (se crea en tu posicion). <dark_gray>(cancelar para salir)"
 
 menus:
 
@@ -262,6 +267,60 @@ menus:
         slot: 45
         material: OAK_DOOR
         name: "<gray><bold>Volver</bold>"
+      advanced:
+        slot: 25
+        material: KNOWLEDGE_BOOK
+        name: "<gold><bold>Ajustes avanzados</bold></gold>"
+        lore:
+          - "<gray>Sala de espera, oleadas, escalado,"
+          - "<gray>recompensas, requisitos y musica."
+      doors:
+        slot: 28
+        material: IRON_DOOR
+        name: "<yellow><bold>Puertas</bold></yellow>"
+        lore:
+          - "<gray>Puertas: <white>{doors}</white>"
+          - "<gray>Se abren al superar una oleada,"
+          - "<gray>con una llave o al matar un jefe."
+      keys:
+        slot: 33
+        material: TRIPWIRE_HOOK
+        name: "<gold><bold>Llaves</bold></gold>"
+        lore:
+          - "<gray>Llaves: <white>{keys}</white>"
+          - "<gray>Las sueltan mobs o jefes y abren"
+          - "<gray>puertas o cofres especiales."
+      checkpoints:
+        slot: 34
+        material: RESPAWN_ANCHOR
+        name: "<aqua><bold>Checkpoints</bold></aqua>"
+        lore:
+          - "<gray>Checkpoints: <white>{checkpoints}</white>"
+          - "<gray>Al morir se reaparece en el ultimo."
+          - "<dark_gray>Requiere 'Salir al morir' desactivado."
+      markers:
+        slot: 37
+        material: SPYGLASS
+        name: "<green><bold>Ver marcadores</bold></green>"
+        lore:
+          - "<gray>Muestra solo a ti donde aparecen"
+          - "<gray>los mobs (por oleada), jefes, puertas,"
+          - "<gray>checkpoints, cofres y la region."
+          - "<dark_gray>Clic para activar / desactivar"
+      warp:
+        slot: 43
+        material: COMPASS
+        name: "<light_purple><bold>Punto de /dungeon tp</bold></light_purple>"
+        lore:
+          - "<gray>Actual: <white>{warp}</white>"
+          - "<gray>Sin punto, /dungeon tp entra directo."
+          - "<dark_gray>Clic izq: usar tu posicion | Clic der: quitar"
+      top:
+        slot: 47
+        material: GOLDEN_HELMET
+        name: "<gold><bold>Ranking</bold></gold>"
+        lore:
+          - "<gray>Muestra los mejores tiempos en el chat."
 
   settings:
     title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Ajustes</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
@@ -389,6 +448,11 @@ menus:
         slot: 49
         material: OAK_DOOR
         name: "<gray><bold>Volver</bold>"
+      more:
+        slot: 53
+        material: KNOWLEDGE_BOOK
+        name: "<gold><bold>Mas ajustes</bold></gold>"
+        lore: ["<gray>Sala de espera, oleadas, escalado,", "<gray>recompensas, requisitos y musica."]
 
   spawns:
     title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Spawns</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
@@ -407,6 +471,7 @@ menus:
           - "<gray>Reaparicion: <white>{respawn}s</white> <dark_gray>| <gray>Intervalo: <white>{interval}s</white>"
           - "<gray>Radio: <white>{radius}</white> <dark_gray>| <gray>Distancia jugador: <white>{min_player_distance}</white>"
           - "<gray>Loot: <white>{loot_table}</white>"
+          - "<gray>Oleada: <white>{wave}</white>"
           - "<gray>Ubicacion: <white>{location}</white>"
           - ""
           - "<green>Clic izquierdo <gray>para editar"
@@ -563,6 +628,15 @@ menus:
         slot: 45
         material: OAK_DOOR
         name: "<gray><bold>Volver</bold>"
+      wave:
+        slot: 37
+        material: GOAT_HORN
+        name: "<gold>Oleada</gold>"
+        lore:
+          - "<gray>Valor actual: <white>{value}</white>"
+          - "<gray>Las oleadas salen en orden: 1, 2, 3..."
+          - "<gray>La siguiente empieza al limpiar la anterior."
+          - "<dark_gray>Clic izq: +1 | Clic der: escribir"
 
   bosses:
     title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Jefes</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
@@ -737,6 +811,56 @@ menus:
         slot: 45
         material: OAK_DOOR
         name: "<gray><bold>Volver</bold>"
+      cinematic-enabled:
+        slot: 37
+        material: ENDER_EYE
+        name: "<light_purple>Cinematica de aparicion</light_purple>"
+        lore: ["<gray>Valor actual: {value}", "<gray>Titulo, sonido y particulas para", "<gray>los jugadores cercanos al jefe.", "<dark_gray>Clic izq: cambiar"]
+      cinematic-delay:
+        slot: 38
+        material: CLOCK
+        name: "<light_purple>Pausa antes de aparecer</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +1s | Clic der: escribir"]
+      cinematic-radius:
+        slot: 39
+        material: SPYGLASS
+        name: "<light_purple>Radio de la cinematica</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Solo la ven los jugadores dentro del radio.", "<gray>0 = toda la dungeon", "<dark_gray>Clic izq: +8 | Clic der: escribir"]
+      cinematic-title:
+        slot: 40
+        material: OAK_SIGN
+        name: "<light_purple>Titulo</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>{boss} = nombre del jefe", "<dark_gray>Clic para escribir"]
+      cinematic-subtitle:
+        slot: 41
+        material: OAK_SIGN
+        name: "<light_purple>Subtitulo</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic para escribir"]
+      cinematic-sound:
+        slot: 42
+        material: NOTE_BLOCK
+        name: "<light_purple>Sonido</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Ej: entity.wither.spawn o nexo:mi_sonido", "<dark_gray>Clic para escribir (none = sin sonido)"]
+      cinematic-particle:
+        slot: 43
+        material: BLAZE_POWDER
+        name: "<light_purple>Particula</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Ej: SOUL_FIRE_FLAME, FLAME, PORTAL", "<dark_gray>Clic para escribir"]
+      music-sound:
+        slot: 46
+        material: MUSIC_DISC_PIGSTEP
+        name: "<aqua>Musica del jefe</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Suena a quien este cerca del jefe", "<gray>mientras este vivo (reemplaza la ambiente).", "<dark_gray>Clic para escribir (none = sin musica)"]
+      music-interval:
+        slot: 47
+        material: REPEATER
+        name: "<aqua>Duracion de la pista</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Cada cuanto se repite la musica.", "<dark_gray>Clic izq: +10s | Clic der: escribir"]
+      music-radius:
+        slot: 48
+        material: SPYGLASS
+        name: "<aqua>Radio de la musica</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +8 | Clic der: escribir"]
 
   entity-picker:
     title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Elegir entidad</bold></gradient>"
@@ -975,6 +1099,11 @@ menus:
         material: ENDER_PEARL
         name: "<light_purple>Ubicacion</light_purple>"
         lore: ["<gray>Actual: <white>{location}</white>", "<dark_gray>Clic para mirar y guardar un cofre"]
+      required-key:
+        slot: 24
+        material: TRIPWIRE_HOOK
+        name: "<gold>Llave necesaria</gold>"
+        lore: ["<gray>Actual: <white>{key}</white>", "<gray>Sin llave el cofre no se puede abrir.", "<dark_gray>Clic para cambiar (crea llaves en el editor)"]
       delete:
         slot: 49
         material: TNT
@@ -1167,3 +1296,379 @@ menus:
         slot: 22
         material: OAK_DOOR
         name: "<gray><bold>Volver y guardar</bold></gray>"
+
+  advanced:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Ajustes avanzados</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
+    size: 54
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      lobby-seconds:
+        slot: 10
+        material: BELL
+        name: "<yellow>Sala de espera</yellow>"
+        lore: ["<gray>Cuenta atras: <white>{value}</white>", "<gray>Empieza cuando hay 'Jugadores minimos'.", "<gray>0 y minimo 1 = empieza al entrar.", "<dark_gray>Clic izq: +10s | Clic der: escribir"]
+      wave-delay-seconds:
+        slot: 11
+        material: GOAT_HORN
+        name: "<yellow>Pausa entre oleadas</yellow>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Oleadas: <white>{waves}</white> (se asignan en cada spawn)", "<dark_gray>Clic izq: +5s | Clic der: escribir"]
+      scaling-health:
+        slot: 13
+        material: GOLDEN_APPLE
+        name: "<red>Escalado de vida</red>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Mobs y jefes ganan vida por cada", "<gray>jugador extra dentro.", "<dark_gray>Clic izq: +10% | Clic der: escribir (ej. 25%)"]
+      scaling-damage:
+        slot: 14
+        material: IRON_SWORD
+        name: "<red>Escalado de dano</red>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +10% | Clic der: escribir (ej. 25%)"]
+      scaling-mobs:
+        slot: 15
+        material: ZOMBIE_HEAD
+        name: "<red>Escalado de cantidad</red>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Mas mobs segun los jugadores al empezar.", "<dark_gray>Clic izq: +10% | Clic der: escribir (ej. 25%)"]
+      reward-loot:
+        slot: 19
+        material: CHEST_MINECART
+        name: "<gold>Recompensa: tabla de loot</gold>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Cada jugador la recibe al completar.", "<dark_gray>Clic izq: elegir | Clic der: quitar"]
+      reward-money:
+        slot: 20
+        material: GOLD_INGOT
+        name: "<gold>Recompensa: dinero</gold>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Necesita Vault y un plugin de economia.", "<dark_gray>Clic izq: +100 | Clic der: escribir"]
+      reward-exp:
+        slot: 21
+        material: EXPERIENCE_BOTTLE
+        name: "<gold>Recompensa: experiencia</gold>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +50 | Clic der: escribir"]
+      req-level:
+        slot: 28
+        material: ENCHANTING_TABLE
+        name: "<aqua>Requisito: nivel</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +5 | Clic der: escribir"]
+      req-money:
+        slot: 29
+        material: GOLD_NUGGET
+        name: "<aqua>Requisito: precio de entrada</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Se cobra al entrar (Vault).", "<dark_gray>Clic izq: +100 | Clic der: escribir"]
+      req-completed:
+        slot: 30
+        material: WRITABLE_BOOK
+        name: "<aqua>Requisito: dungeons completadas</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>IDs separados por coma (none = ninguna).", "<dark_gray>Clic para escribir"]
+      req-item:
+        slot: 31
+        material: PAPER
+        name: "<aqua>Requisito: ticket / objeto</aqua>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Se consume al entrar (incluye Nexo/Oraxen).", "<dark_gray>Clic izq: usar el item de tu mano | Clic der: quitar"]
+      ambient-sound:
+        slot: 37
+        material: JUKEBOX
+        name: "<light_purple>Musica ambiente</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Ej: music_disc.otherside o nexo:mi_musica", "<dark_gray>Clic para escribir (none = sin musica)"]
+      ambient-interval:
+        slot: 38
+        material: REPEATER
+        name: "<light_purple>Duracion de la pista</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<gray>Cada cuanto se repite.", "<dark_gray>Clic izq: +10s | Clic der: escribir"]
+      ambient-volume:
+        slot: 39
+        material: NOTE_BLOCK
+        name: "<light_purple>Volumen</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +0.2 | Clic der: escribir"]
+      ambient-pitch:
+        slot: 40
+        material: AMETHYST_SHARD
+        name: "<light_purple>Tono</light_purple>"
+        lore: ["<gray>Valor actual: <white>{value}</white>", "<dark_gray>Clic izq: +0.1 | Clic der: escribir"]
+      ambient-test:
+        slot: 41
+        material: MUSIC_DISC_CAT
+        name: "<light_purple>Probar musica</light_purple>"
+        lore: ["<gray>Te reproduce la musica ambiente."]
+      settings:
+        slot: 45
+        material: COMPARATOR
+        name: "<yellow><bold>Ajustes basicos</bold></yellow>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+
+  doors:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Puertas</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
+    size: 54
+    list-slots: "10-16,19-25,28-34"
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      door-entry:
+        material: IRON_DOOR
+        name: "<yellow><bold>{door}</bold></yellow>"
+        lore:
+          - "<gray>Se abre: <white>{trigger_text}</white>"
+          - "<gray>Bloques guardados: {configured}"
+          - "<gray>Region: <white>{region}</white>"
+          - ""
+          - "<green>Clic izquierdo <gray>para editar"
+          - "<red>Clic derecho <gray>para borrar"
+      empty:
+        material: BARRIER
+        name: "<red>No hay puertas</red>"
+        lore: ["<gray>Crea una con el boton verde."]
+      prev:
+        slot: 45
+        material: ARROW
+        name: "<gray><bold>Pagina anterior</bold>"
+      next:
+        slot: 53
+        material: ARROW
+        name: "<gray><bold>Pagina siguiente</bold>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+      create:
+        slot: 48
+        material: EMERALD_BLOCK
+        name: "<green><bold>Crear puerta</bold></green>"
+        lore: ["<gray>Luego marca sus esquinas en el editor."]
+
+  door-editor:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Puerta</bold></gradient> <dark_gray>| <white>{door}</white>"
+    size: 54
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      info:
+        slot: 4
+        material: IRON_DOOR
+        name: "<yellow><bold>{door}</bold></yellow>"
+        lore:
+          - "<gray>Se abre: <white>{trigger_text}</white>"
+          - "<gray>Region: <white>{region}</white>"
+          - "<gray>Bloques guardados: {configured}"
+          - "<gray>Abierta ahora: {open}"
+          - ""
+          - "<dark_gray>1. Marca las esquinas mirando un bloque"
+          - "<dark_gray>2. Guarda los bloques con la puerta cerrada"
+          - "<dark_gray>3. Elige cuando se abre"
+      corner1:
+        slot: 19
+        material: ARROW
+        name: "<white><bold>Esquina 1</bold>"
+        lore: ["<gray>Actual: <white>{corner1}</white>", "<dark_gray>Clic: el bloque que miras (o tu posicion)"]
+      corner2:
+        slot: 20
+        material: ARROW
+        name: "<white><bold>Esquina 2</bold>"
+        lore: ["<gray>Actual: <white>{corner2}</white>", "<dark_gray>Clic: el bloque que miras (o tu posicion)"]
+      capture:
+        slot: 21
+        material: LIME_DYE
+        name: "<green><bold>Guardar bloques</bold></green>"
+        lore: ["<gray>Guarda los bloques entre las esquinas", "<gray>como la puerta cerrada.", "<dark_gray>Hazlo con la puerta construida"]
+      trigger:
+        slot: 23
+        material: COMPARATOR
+        name: "<yellow>Como se abre</yellow>"
+        lore: ["<gray>Actual: <white>{trigger}</white>", "<gray>WAVE: al superar una oleada", "<gray>KEY: con una llave (clic derecho)", "<gray>BOSS: al matar un jefe", "<gray>MANUAL: con /dungeon door", "<dark_gray>Clic para cambiar"]
+      trigger-value:
+        slot: 24
+        material: NAME_TAG
+        name: "<yellow>Oleada / llave / jefe</yellow>"
+        lore: ["<gray>Actual: <white>{trigger_value}</white>", "<dark_gray>Clic izq: siguiente | Clic der: escribir"]
+      sound:
+        slot: 25
+        material: NOTE_BLOCK
+        name: "<yellow>Sonido al abrir</yellow>"
+        lore: ["<gray>Actual: <white>{sound}</white>", "<dark_gray>Clic para escribir"]
+      test-open:
+        slot: 30
+        material: LIME_CONCRETE
+        name: "<green>Probar: abrir</green>"
+      test-close:
+        slot: 31
+        material: RED_CONCRETE
+        name: "<red>Probar: cerrar</red>"
+      teleport:
+        slot: 32
+        material: ENDER_PEARL
+        name: "<light_purple>Ir a la puerta</light_purple>"
+      delete:
+        slot: 40
+        material: TNT
+        name: "<dark_red><bold>Borrar puerta</bold></dark_red>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+
+  keys:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Llaves</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
+    size: 54
+    list-slots: "10-16,19-25,28-34"
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      key-entry:
+        material: TRIPWIRE_HOOK
+        name: "<gold><bold>{key}</bold></gold>"
+        lore:
+          - "<gray>Nombre: {name}"
+          - "<gray>La suelta: <white>{drop_from}</white> <dark_gray>({chance})"
+          - "<gray>Abre: <white>{uses}</white>"
+          - ""
+          - "<green>Clic izquierdo <gray>para editar"
+          - "<red>Clic derecho <gray>para borrar"
+      empty:
+        material: BARRIER
+        name: "<red>No hay llaves</red>"
+        lore: ["<gray>Crea una con el boton verde."]
+      prev:
+        slot: 45
+        material: ARROW
+        name: "<gray><bold>Pagina anterior</bold>"
+      next:
+        slot: 53
+        material: ARROW
+        name: "<gray><bold>Pagina siguiente</bold>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+      create:
+        slot: 48
+        material: EMERALD_BLOCK
+        name: "<green><bold>Crear llave</bold></green>"
+
+  key-editor:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Llave</bold></gradient> <dark_gray>| <white>{key}</white>"
+    size: 54
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      info:
+        slot: 4
+        material: BOOK
+        name: "<gold><bold>{key}</bold></gold>"
+        lore:
+          - "<gray>Abre: <white>{uses}</white>"
+          - "<dark_gray>Asignala a una puerta (KEY) o a un cofre."
+          - "<dark_gray>Se retira del inventario al salir."
+      name:
+        slot: 20
+        material: NAME_TAG
+        name: "<yellow>Nombre</yellow>"
+        lore: ["<gray>Actual: {name}", "<dark_gray>Clic para escribir (MiniMessage)"]
+      item:
+        slot: 21
+        material: ITEM_FRAME
+        name: "<yellow>Aspecto</yellow>"
+        lore: ["<gray>Actual: <white>{item}</white>", "<dark_gray>Clic izq: usar el item de tu mano | Clic der: por defecto"]
+      drop-from:
+        slot: 22
+        material: ZOMBIE_HEAD
+        name: "<yellow>Quien la suelta</yellow>"
+        lore: ["<gray>Actual: <white>{drop_from}</white>", "<dark_gray>Clic para recorrer spawns y jefes"]
+      drop-chance:
+        slot: 23
+        material: RABBIT_FOOT
+        name: "<yellow>Probabilidad</yellow>"
+        lore: ["<gray>Actual: <white>{chance}</white>", "<dark_gray>Clic izq: +10% | Clic der: escribir"]
+      give:
+        slot: 24
+        material: CHEST
+        name: "<green>Darme la llave</green>"
+        lore: ["<gray>Para probarla."]
+      delete:
+        slot: 40
+        material: TNT
+        name: "<dark_red><bold>Borrar llave</bold></dark_red>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+
+  checkpoints:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Checkpoints</bold></gradient> <dark_gray>| <white>{dungeon}</white>"
+    size: 54
+    list-slots: "10-16,19-25,28-34"
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      checkpoint-entry:
+        material: RESPAWN_ANCHOR
+        name: "<aqua><bold>{checkpoint}</bold></aqua>"
+        lore:
+          - "<gray>Ubicacion: <white>{location}</white>"
+          - "<gray>Radio: <white>{radius}</white>"
+          - ""
+          - "<green>Clic izquierdo <gray>para editar"
+          - "<red>Clic derecho <gray>para borrar"
+      empty:
+        material: BARRIER
+        name: "<red>No hay checkpoints</red>"
+        lore: ["<gray>Crea uno con el boton verde."]
+      prev:
+        slot: 45
+        material: ARROW
+        name: "<gray><bold>Pagina anterior</bold>"
+      next:
+        slot: 53
+        material: ARROW
+        name: "<gray><bold>Pagina siguiente</bold>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"
+      create:
+        slot: 48
+        material: EMERALD_BLOCK
+        name: "<green><bold>Crear checkpoint</bold></green>"
+        lore: ["<gray>Se crea en tu posicion actual."]
+
+  checkpoint-editor:
+    title: "<dark_gray>» <gradient:#8e2de2:#4a00e0><bold>Checkpoint</bold></gradient> <dark_gray>| <white>{checkpoint}</white>"
+    size: 54
+    items:
+      fill:
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      info:
+        slot: 4
+        material: RESPAWN_ANCHOR
+        name: "<aqua><bold>{checkpoint}</bold></aqua>"
+        lore:
+          - "<gray>Cuando un jugador pasa por aqui, todo"
+          - "<gray>el grupo reaparece en este punto al morir."
+      location:
+        slot: 20
+        material: ENDER_PEARL
+        name: "<light_purple>Ubicacion</light_purple>"
+        lore: ["<gray>Actual: <white>{location}</white>", "<dark_gray>Clic para usar tu posicion"]
+      radius:
+        slot: 22
+        material: SPYGLASS
+        name: "<yellow>Radio</yellow>"
+        lore: ["<gray>Actual: <white>{radius}</white>", "<dark_gray>Clic izq: +1 | Clic der: escribir"]
+      teleport:
+        slot: 24
+        material: COMPASS
+        name: "<light_purple>Ir al checkpoint</light_purple>"
+      delete:
+        slot: 40
+        material: TNT
+        name: "<dark_red><bold>Borrar checkpoint</bold></dark_red>"
+      back:
+        slot: 49
+        material: OAK_DOOR
+        name: "<gray><bold>Volver</bold>"

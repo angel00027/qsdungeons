@@ -32,6 +32,10 @@ cooldown-protection:
 # En false, ni siquiera los administradores con ese permiso pueden romperlas.
 protection:
   admin-bypass: false
+  # true = tampoco se pueden usar puertas, palancas, botones, trampillas,
+  # yunques, etc. dentro de una dungeon protegida. Los cofres y demas
+  # contenedores siempre se pueden abrir. Dejalo en false si usas puzles.
+  block-interactions: false
 
 # Sonidos de Bukkit. Deja el valor vacio ("") para desactivar.
 sounds:

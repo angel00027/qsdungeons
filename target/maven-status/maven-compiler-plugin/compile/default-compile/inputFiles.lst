@@ -9,9 +9,12 @@ C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\co
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\config\Messages.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\config\YamlDefaultsUpdater.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\BossBarSettings.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\Checkpoint.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\ChestSpawn.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\CompleteMode.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\Dungeon.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\DungeonDoor.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\DungeonKey.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\DungeonManager.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\DungeonSettings.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\DungeonState.java
@@ -20,12 +23,15 @@ C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\du
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\instance\SpawnerRuntime.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\Region.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\dungeon\RewardBlock.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\editor\MarkerService.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\gui\FeatureMenus.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\gui\GuiConfig.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\gui\GuiHolder.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\gui\GuiListener.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\gui\GuiManager.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\listener\DungeonEntityListener.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\listener\DungeonEntryListener.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\listener\DungeonFeatureListener.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\listener\DungeonLootListener.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\listener\DungeonProtectionListener.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\loot\LootEntry.java
@@ -40,6 +46,7 @@ C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\sp
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\spawn\MobType.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\spawn\MythicMobsHook.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\spawn\SpawnPoint.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\stats\StatsManager.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\storage\DungeonArchive.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\storage\DungeonRepository.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\storage\ExampleDungeon.java
@@ -48,7 +55,9 @@ C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\st
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\storage\YamlMaps.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\BlockKey.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\ConfigValues.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\EconomyHook.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\Keys.java
+C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\Sounds.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\Tags.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\util\Text.java
 C:\Users\ANGEL\Documents\proyectos\qsdungeons\src\main\java\org\qs\qsdungeons\worldedit\WorldEditHook.java
