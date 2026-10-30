@@ -21,6 +21,7 @@ public final class Dungeon {
     private Region region;
     private Location entry;
     private Location exit;
+    private Location warp;
     private DungeonSettings settings = new DungeonSettings();
 
     private final Map<String, SpawnPoint> spawns = new LinkedHashMap<>();
@@ -28,6 +29,9 @@ public final class Dungeon {
     private final Map<String, LootTable> lootTables = new LinkedHashMap<>();
     private final Map<String, ChestSpawn> chests = new LinkedHashMap<>();
     private final Map<String, RewardBlock> rewards = new LinkedHashMap<>();
+    private final Map<String, DungeonDoor> doors = new LinkedHashMap<>();
+    private final Map<String, DungeonKey> keys = new LinkedHashMap<>();
+    private final Map<String, Checkpoint> checkpoints = new LinkedHashMap<>();
 
     public Dungeon(String id) {
         this.id = id;
@@ -84,6 +88,26 @@ public final class Dungeon {
 
     public void setExit(Location exit) {
         this.exit = exit;
+    }
+
+    public Location getWarp() {
+        return warp;
+    }
+
+    public void setWarp(Location warp) {
+        this.warp = warp;
+    }
+
+    public Map<String, DungeonDoor> getDoors() {
+        return doors;
+    }
+
+    public Map<String, DungeonKey> getKeys() {
+        return keys;
+    }
+
+    public Map<String, Checkpoint> getCheckpoints() {
+        return checkpoints;
     }
 
     public DungeonSettings getSettings() {

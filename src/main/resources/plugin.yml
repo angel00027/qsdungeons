@@ -31,3 +31,12 @@ permissions:
   qsdungeons.cooldown.bypass:
     description: Ignora el cooldown de reentrada a dungeons.
     default: op
+  qsdungeons.tp:
+    description: Permite usar /dungeon tp <id> para ir a una dungeon.
+    default: true
+  qsdungeons.tp.others:
+    description: Permite enviar a otros jugadores con /dungeon tp <id> <jugador>.
+    default: op
+  qsdungeons.requirements.bypass:
+    description: Entra sin cumplir requisitos ni pagar la entrada.
+    default: op

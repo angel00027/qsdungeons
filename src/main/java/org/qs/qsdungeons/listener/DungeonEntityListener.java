@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.boss.BossDefinition;
 import org.qs.qsdungeons.dungeon.Dungeon;
@@ -62,6 +63,17 @@ public final class DungeonEntityListener implements Listener {
             event.setDroppedExp(0);
         }
         instance.handleDeath(entity, entity.getKiller());
+    }
+
+    /**
+     * Los mobs de una partida que termino mientras su chunk estaba descargado
+     * se eliminan en cuanto el chunk vuelve a cargarse.
+     */
+    @EventHandler
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
+        for (Entity entity : event.getEntities()) {
+            plugin.getDungeonManager().cleanupOrphan(entity);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

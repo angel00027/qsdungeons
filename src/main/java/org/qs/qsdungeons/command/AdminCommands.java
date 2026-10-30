@@ -131,7 +131,7 @@ public final class AdminCommands {
         if (dungeon == null) {
             return;
         }
-        dungeon.setEnabled(enabled);
+        plugin.getDungeonManager().setEnabled(dungeon, enabled);
         save(dungeon);
         send(sender, enabled ? "general.enabled" : "general.disabled",
                 Map.of("dungeon", dungeon.getId()));

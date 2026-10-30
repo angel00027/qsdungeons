@@ -5,6 +5,7 @@ package org.qs.qsdungeons.dungeon;
  */
 public enum DungeonState {
     IDLE,
+    WAITING,
     RUNNING,
     COMPLETED,
     FAILED

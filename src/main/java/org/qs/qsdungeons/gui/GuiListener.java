@@ -113,9 +113,9 @@ public final class GuiListener implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
+        // Al abrir el siguiente menu se vuelve a iniciar el refresco si lo usa.
         if (event.getPlayer() instanceof Player player
-                && event.getInventory().getHolder() instanceof GuiHolder holder
-                && holder.getMenu().equals("player-dungeons")) {
+                && event.getInventory().getHolder() instanceof GuiHolder) {
             plugin.getGuiManager().stopPlayerMenuRefresh(player);
         }
         if (event.getInventory().getHolder() instanceof GuiHolder holder

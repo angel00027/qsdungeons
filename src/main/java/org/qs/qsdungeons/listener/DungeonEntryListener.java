@@ -36,9 +36,12 @@ public final class DungeonEntryListener implements Listener {
         plugin.getDungeonManager().handleDeath(event.getEntity());
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onRespawn(PlayerRespawnEvent event) {
-        plugin.getDungeonManager().handleRespawn(event.getPlayer());
+        org.bukkit.Location location = plugin.getDungeonManager().handleRespawn(event.getPlayer());
+        if (location != null) {
+            event.setRespawnLocation(location);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

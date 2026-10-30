@@ -56,6 +56,12 @@ public final class DungeonCommand implements CommandExecutor {
             case "cooldown-location" -> cooldownLocation(sender, args);
             case "cooldown-protection" -> cooldownProtection(sender, args);
             case "protection" -> protection(sender, args);
+            case "tp", "teleport", "ir" -> teleport(sender, args);
+            case "top", "ranking" -> top(sender, args);
+            case "stats", "estadisticas" -> stats(sender, args);
+            case "setwarp" -> setWarp(sender, args);
+            case "door", "puerta" -> door(sender, args);
+            case "markers", "marcadores" -> markers(sender, args);
             default -> {
                 if (isAdminSubcommand(sub)) {
                     if (!requireAdmin(sender)) {
@@ -81,9 +87,11 @@ public final class DungeonCommand implements CommandExecutor {
         plugin.getMessages().send(sender, "command.help.header");
         plugin.getMessages().send(sender, "command.help.title");
         plugin.getMessages().send(sender, "command.help.player");
+        plugin.getMessages().send(sender, "command.help.player-extra");
         if (sender.hasPermission(ADMIN_PERMISSION)) {
             plugin.getMessages().send(sender, "command.help.admin");
             plugin.getMessages().send(sender, "command.help.transfer");
+            plugin.getMessages().send(sender, "command.help.extra");
         }
         plugin.getMessages().send(sender, "command.help.header");
     }
@@ -313,6 +321,187 @@ public final class DungeonCommand implements CommandExecutor {
         plugin.saveConfig();
         plugin.getMessages().sendRaw(sender, "<green>Bypass de proteccion para administradores: "
                 + (enabled ? "<white>activado" : "<white>desactivado"), null);
+    }
+
+    private void teleport(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            plugin.getMessages().send(sender, "general.usage", Map.of("usage", "/dungeon tp <id> [jugador]"));
+            return;
+        }
+        Dungeon dungeon = plugin.getDungeonManager().getDungeon(args[1]);
+        if (dungeon == null) {
+            plugin.getMessages().send(sender, "general.unknown-dungeon", Map.of("dungeon", args[1]));
+            return;
+        }
+        Player target;
+        if (args.length >= 3) {
+            if (!sender.hasPermission("qsdungeons.tp.others")) {
+                plugin.getMessages().send(sender, "general.no-permission");
+                return;
+            }
+            target = org.bukkit.Bukkit.getPlayerExact(args[2]);
+            if (target == null) {
+                plugin.getMessages().send(sender, "general.player-not-found", Map.of("player", args[2]));
+                return;
+            }
+        } else {
+            target = player(sender);
+            if (target == null) {
+                return;
+            }
+            if (!sender.hasPermission("qsdungeons.tp")) {
+                plugin.getMessages().send(sender, "general.no-permission");
+                return;
+            }
+        }
+        plugin.getDungeonManager().teleport(target, dungeon);
+    }
+
+    private void top(CommandSender sender, String[] args) {
+        Dungeon dungeon = args.length >= 2 ? plugin.getDungeonManager().getDungeon(args[1]) : null;
+        if (dungeon == null && sender instanceof Player player) {
+            DungeonInstance instance = plugin.getDungeonManager().getPlayerInstance(player);
+            dungeon = instance == null ? null : instance.getDungeon();
+        }
+        if (dungeon == null) {
+            plugin.getMessages().send(sender, "general.usage", Map.of("usage", "/dungeon top <id>"));
+            return;
+        }
+        sendTop(sender, dungeon);
+    }
+
+    /**
+     * Muestra el top 10 de mejores tiempos de una dungeon.
+     */
+    public void sendTop(CommandSender sender, Dungeon dungeon) {
+        java.util.List<org.qs.qsdungeons.stats.StatsManager.Entry> top =
+                plugin.getStatsManager().top(dungeon.getId(), 10);
+        plugin.getMessages().send(sender, "top.header", Map.of("dungeon_name", dungeon.getDisplayName()));
+        if (top.isEmpty()) {
+            plugin.getMessages().send(sender, "top.empty");
+            return;
+        }
+        int position = 1;
+        for (org.qs.qsdungeons.stats.StatsManager.Entry entry : top) {
+            plugin.getMessages().send(sender, "top.entry", Map.of(
+                    "position", String.valueOf(position++),
+                    "player", entry.name(),
+                    "time", plugin.getPlaceholderService().formatDuration(entry.seconds()),
+                    "completions", String.valueOf(entry.completions())));
+        }
+    }
+
+    private void stats(CommandSender sender, String[] args) {
+        java.util.UUID uuid;
+        String name;
+        if (args.length >= 2) {
+            Player online = org.bukkit.Bukkit.getPlayerExact(args[1]);
+            uuid = online != null ? online.getUniqueId() : plugin.getStatsManager().findByName(args[1]);
+            name = online != null ? online.getName() : args[1];
+            if (uuid == null) {
+                plugin.getMessages().send(sender, "general.player-not-found", Map.of("player", args[1]));
+                return;
+            }
+        } else {
+            Player player = player(sender);
+            if (player == null) {
+                return;
+            }
+            uuid = player.getUniqueId();
+            name = player.getName();
+        }
+        org.qs.qsdungeons.stats.StatsManager stats = plugin.getStatsManager();
+        plugin.getMessages().send(sender, "stats.header", Map.of("player", name));
+        plugin.getMessages().send(sender, "stats.total", Map.of(
+                "completions", String.valueOf(stats.total(uuid, org.qs.qsdungeons.stats.StatsManager.COMPLETIONS)),
+                "fails", String.valueOf(stats.total(uuid, org.qs.qsdungeons.stats.StatsManager.FAILS)),
+                "deaths", String.valueOf(stats.total(uuid, org.qs.qsdungeons.stats.StatsManager.DEATHS)),
+                "kills", String.valueOf(stats.total(uuid, org.qs.qsdungeons.stats.StatsManager.KILLS)),
+                "boss_kills", String.valueOf(stats.total(uuid, org.qs.qsdungeons.stats.StatsManager.BOSS_KILLS))));
+        for (Dungeon dungeon : plugin.getDungeonManager().getDungeons()) {
+            long completions = stats.get(uuid, dungeon.getId(), org.qs.qsdungeons.stats.StatsManager.COMPLETIONS);
+            long best = stats.get(uuid, dungeon.getId(), org.qs.qsdungeons.stats.StatsManager.BEST_TIME);
+            if (completions <= 0 && best <= 0) {
+                continue;
+            }
+            plugin.getMessages().send(sender, "stats.dungeon", Map.of(
+                    "dungeon_name", dungeon.getDisplayName(),
+                    "completions", String.valueOf(completions),
+                    "best", best <= 0 ? "-" : plugin.getPlaceholderService().formatDuration(best)));
+        }
+    }
+
+    private void setWarp(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        Player player = player(sender);
+        if (player == null) {
+            return;
+        }
+        if (args.length < 2) {
+            plugin.getMessages().send(sender, "general.usage", Map.of("usage", "/dungeon setwarp <id> [clear]"));
+            return;
+        }
+        Dungeon dungeon = plugin.getDungeonManager().getDungeon(args[1]);
+        if (dungeon == null) {
+            plugin.getMessages().send(sender, "general.unknown-dungeon", Map.of("dungeon", args[1]));
+            return;
+        }
+        boolean clear = args.length >= 3 && args[2].equalsIgnoreCase("clear");
+        dungeon.setWarp(clear ? null : player.getLocation().clone());
+        plugin.getRepository().save(dungeon);
+        plugin.getMessages().send(sender, clear ? "tp.warp-cleared" : "tp.warp-set", Map.of("dungeon", dungeon.getId()));
+    }
+
+    private void door(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        if (args.length < 4) {
+            plugin.getMessages().send(sender, "general.usage",
+                    Map.of("usage", "/dungeon door <id> <puerta> <open|close>"));
+            return;
+        }
+        Dungeon dungeon = plugin.getDungeonManager().getDungeon(args[1]);
+        if (dungeon == null) {
+            plugin.getMessages().send(sender, "general.unknown-dungeon", Map.of("dungeon", args[1]));
+            return;
+        }
+        org.qs.qsdungeons.dungeon.DungeonDoor door = dungeon.getDoors().get(args[2].toLowerCase(Locale.ROOT));
+        if (door == null || !door.isConfigured()) {
+            plugin.getMessages().send(sender, "door.not-found", Map.of("door", args[2]));
+            return;
+        }
+        boolean open = !args[3].equalsIgnoreCase("close");
+        DungeonInstance instance = plugin.getDungeonManager().getInstance(dungeon.getId());
+        if (open && instance != null && instance.isRunning()) {
+            instance.openDoor(door);
+        } else if (open) {
+            door.open();
+        } else {
+            door.close();
+        }
+        plugin.getMessages().send(sender, open ? "door.opened" : "door.closed", Map.of("door", door.getId()));
+    }
+
+    private void markers(CommandSender sender, String[] args) {
+        if (!requireAdmin(sender)) {
+            return;
+        }
+        Player player = player(sender);
+        if (player == null) {
+            return;
+        }
+        Dungeon dungeon = args.length >= 2 ? plugin.getDungeonManager().getDungeon(args[1])
+                : plugin.getDungeonManager().findDungeonAt(player.getLocation());
+        if (dungeon == null) {
+            plugin.getMessages().send(sender, "general.usage", Map.of("usage", "/dungeon markers <id>"));
+            return;
+        }
+        boolean shown = plugin.getMarkerService().toggle(player, dungeon);
+        plugin.getMessages().send(sender, shown ? "markers.shown" : "markers.hidden",
+                Map.of("dungeon", dungeon.getId()));
     }
 
     private Player player(CommandSender sender) {

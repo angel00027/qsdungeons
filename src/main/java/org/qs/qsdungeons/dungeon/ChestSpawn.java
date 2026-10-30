@@ -19,6 +19,8 @@ public final class ChestSpawn {
     private String blockData = "";
     private int refillSeconds = 0;
     private boolean enabled = true;
+    // Llave necesaria para abrirlo (vacio = libre).
+    private String requiredKey = "";
 
     public ChestSpawn(String id) {
         this.id = id;
@@ -34,6 +36,7 @@ public final class ChestSpawn {
         chest.blockData = section.getString("block-data", "");
         chest.refillSeconds = ConfigValues.parseDuration(section.getString("refill-seconds"), 0);
         chest.enabled = section.getBoolean("enabled", true);
+        chest.requiredKey = section.getString("required-key", "");
         return chest;
     }
 
@@ -57,6 +60,9 @@ public final class ChestSpawn {
         }
         section.set("refill-seconds", refillSeconds);
         section.set("enabled", enabled);
+        if (requiredKey != null && !requiredKey.isBlank()) {
+            section.set("required-key", requiredKey);
+        }
     }
 
     public BlockData parseBlockData() {
@@ -116,5 +122,13 @@ public final class ChestSpawn {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getRequiredKey() {
+        return requiredKey == null ? "" : requiredKey;
+    }
+
+    public void setRequiredKey(String requiredKey) {
+        this.requiredKey = requiredKey == null ? "" : requiredKey;
     }
 }

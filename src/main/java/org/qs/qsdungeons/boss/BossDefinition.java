@@ -46,6 +46,20 @@ public final class BossDefinition {
     private final List<String> commandsOnSpawn = new ArrayList<>();
     private final List<String> commandsOnDeath = new ArrayList<>();
 
+    // Cinematica de aparicion: solo la ven los jugadores cercanos.
+    private boolean cinematicEnabled = false;
+    private int cinematicDelay = 3;
+    private double cinematicRadius = 32.0D;
+    private String cinematicTitle = "<dark_red><bold>{boss}</bold></dark_red>";
+    private String cinematicSubtitle = "<gray>Se acerca...";
+    private String cinematicSound = "entity.wither.spawn";
+    private String cinematicParticle = "SOUL_FIRE_FLAME";
+
+    // Musica que escuchan los jugadores cerca del jefe mientras vive.
+    private String musicSound = "";
+    private int musicInterval = 60;
+    private double musicRadius = 40.0D;
+
     public BossDefinition(String id) {
         this.id = id;
         this.bossBar.setTitle("<red><bold>{boss}</bold></red> <dark_gray>| <white>{boss_health}<gray>/<white>{boss_max_health}");
@@ -77,6 +91,16 @@ public final class BossDefinition {
         boss.bossBar = BossBarSettings.read(section.getConfigurationSection("bossbar"), boss.bossBar);
         boss.commandsOnSpawn.addAll(section.getStringList("commands-on-spawn"));
         boss.commandsOnDeath.addAll(section.getStringList("commands-on-death"));
+        boss.cinematicEnabled = section.getBoolean("cinematic.enabled", boss.cinematicEnabled);
+        boss.cinematicDelay = Math.max(0, section.getInt("cinematic.delay-seconds", boss.cinematicDelay));
+        boss.cinematicRadius = section.getDouble("cinematic.radius", boss.cinematicRadius);
+        boss.cinematicTitle = section.getString("cinematic.title", boss.cinematicTitle);
+        boss.cinematicSubtitle = section.getString("cinematic.subtitle", boss.cinematicSubtitle);
+        boss.cinematicSound = section.getString("cinematic.sound", boss.cinematicSound);
+        boss.cinematicParticle = section.getString("cinematic.particle", boss.cinematicParticle);
+        boss.musicSound = section.getString("music.sound", boss.musicSound);
+        boss.musicInterval = Math.max(1, section.getInt("music.interval-seconds", boss.musicInterval));
+        boss.musicRadius = section.getDouble("music.radius", boss.musicRadius);
 
         ConfigurationSection equipmentSection = section.getConfigurationSection("equipment");
         if (equipmentSection != null) {
@@ -132,6 +156,16 @@ public final class BossDefinition {
         if (!commandsOnDeath.isEmpty()) {
             section.set("commands-on-death", commandsOnDeath);
         }
+        section.set("cinematic.enabled", cinematicEnabled);
+        section.set("cinematic.delay-seconds", cinematicDelay);
+        section.set("cinematic.radius", cinematicRadius);
+        section.set("cinematic.title", cinematicTitle);
+        section.set("cinematic.subtitle", cinematicSubtitle);
+        section.set("cinematic.sound", cinematicSound);
+        section.set("cinematic.particle", cinematicParticle);
+        section.set("music.sound", musicSound);
+        section.set("music.interval-seconds", musicInterval);
+        section.set("music.radius", musicRadius);
         if (!equipment.isEmpty()) {
             ConfigurationSection equipmentSection = section.createSection("equipment");
             for (Map.Entry<EquipmentSlot, ItemStack> entry : equipment.entrySet()) {
@@ -310,5 +344,85 @@ public final class BossDefinition {
 
     public List<String> getCommandsOnDeath() {
         return commandsOnDeath;
+    }
+
+    public boolean isCinematicEnabled() {
+        return cinematicEnabled;
+    }
+
+    public void setCinematicEnabled(boolean cinematicEnabled) {
+        this.cinematicEnabled = cinematicEnabled;
+    }
+
+    public int getCinematicDelay() {
+        return cinematicDelay;
+    }
+
+    public void setCinematicDelay(int cinematicDelay) {
+        this.cinematicDelay = Math.max(0, cinematicDelay);
+    }
+
+    public double getCinematicRadius() {
+        return cinematicRadius;
+    }
+
+    public void setCinematicRadius(double cinematicRadius) {
+        this.cinematicRadius = Math.max(0.0D, cinematicRadius);
+    }
+
+    public String getCinematicTitle() {
+        return cinematicTitle;
+    }
+
+    public void setCinematicTitle(String cinematicTitle) {
+        this.cinematicTitle = cinematicTitle == null ? "" : cinematicTitle;
+    }
+
+    public String getCinematicSubtitle() {
+        return cinematicSubtitle;
+    }
+
+    public void setCinematicSubtitle(String cinematicSubtitle) {
+        this.cinematicSubtitle = cinematicSubtitle == null ? "" : cinematicSubtitle;
+    }
+
+    public String getCinematicSound() {
+        return cinematicSound;
+    }
+
+    public void setCinematicSound(String cinematicSound) {
+        this.cinematicSound = cinematicSound == null ? "" : cinematicSound;
+    }
+
+    public String getCinematicParticle() {
+        return cinematicParticle;
+    }
+
+    public void setCinematicParticle(String cinematicParticle) {
+        this.cinematicParticle = cinematicParticle == null ? "" : cinematicParticle;
+    }
+
+    public String getMusicSound() {
+        return musicSound;
+    }
+
+    public void setMusicSound(String musicSound) {
+        this.musicSound = musicSound == null ? "" : musicSound;
+    }
+
+    public int getMusicInterval() {
+        return musicInterval;
+    }
+
+    public void setMusicInterval(int musicInterval) {
+        this.musicInterval = Math.max(1, musicInterval);
+    }
+
+    public double getMusicRadius() {
+        return musicRadius;
+    }
+
+    public void setMusicRadius(double musicRadius) {
+        this.musicRadius = Math.max(1.0D, musicRadius);
     }
 }

@@ -33,6 +33,8 @@ command:
     header: "<dark_gray><strikethrough>                                                  </strikethrough>"
     title: "<gradient:#8e2de2:#4a00e0><bold>QSDungeons</bold></gradient> <dark_gray>| <gray>Comandos"
     player: "<white>/dungeon menu <dark_gray>- <gray>Ver y entrar a dungeons habilitadas\n<white>/dungeon list <dark_gray>- <gray>Lista las dungeons\n<white>/dungeon info [id] <dark_gray>- <gray>Informacion de una dungeon\n<white>/dungeon join <id> <dark_gray>- <gray>Entrar a una dungeon\n<white>/dungeon leave <dark_gray>- <gray>Salir de la dungeon"
+    player-extra: "<white>/dungeon tp <id> <dark_gray>- <gray>Ir a una dungeon\n<white>/dungeon top <id> <dark_gray>- <gray>Mejores tiempos\n<white>/dungeon stats [jugador] <dark_gray>- <gray>Estadisticas"
+    extra: "<white>/dungeon setwarp <id> [clear] <dark_gray>- <gray>Punto de /dungeon tp\n<white>/dungeon markers [id] <dark_gray>- <gray>Ver spawns, jefes y puertas\n<white>/dungeon door <id> <puerta> <open|close> <dark_gray>- <gray>Abrir/cerrar una puerta\n<white>/dungeon tp <id> <jugador> <dark_gray>- <gray>Enviar a un jugador"
     admin: "<white>/dungeon editor [id] <dark_gray>- <gray>Abrir el editor grafico\n<white>/dungeon create <id> <dark_gray>- <gray>Crear dungeon\n<white>/dungeon delete <id> <dark_gray>- <gray>Borrar dungeon\n<white>/dungeon pos1 | pos2 <dark_gray>- <gray>Marcar esquinas\n<white>/dungeon region <id> <dark_gray>- <gray>Guardar region\n<white>/dungeon entry <id> <dark_gray>- <gray>Punto de entrada\n<white>/dungeon exit <id> <dark_gray>- <gray>Punto de salida\n<white>/dungeon cooldown-location <dark_gray>- <gray>Guardar ubicacion de expulsion\n<white>/dungeon cooldown-protection [on|off|toggle] <dark_gray>- <gray>Expulsion por cooldown\n<white>/dungeon protection [on|off|toggle] <dark_gray>- <gray>Permitir bypass de proteccion\n<white>/dungeon spawn add <id> <spawnId> <dark_gray>- <gray>Crear spawn de mob\n<white>/dungeon boss create <id> <bossId> <dark_gray>- <gray>Crear jefe\n<white>/dungeon loot create <id> <lootId> <dark_gray>- <gray>Crear tabla de loot\n<white>/dungeon loot add <id> <lootId> <dark_gray>- <gray>Añadir item en mano\n<white>/dungeon chest add <id> <chestId> <lootId> <dark_gray>- <gray>Registrar cofre\n<white>/dungeon reward add <id> <rewardId> <lootId> <dark_gray>- <gray>Registrar bloque premiado\n<white>/dungeon start | stop | reset <id> <dark_gray>- <gray>Controlar dungeon\n<white>/dungeon reload <dark_gray>- <gray>Recargar todo"
     transfer: "<white>/dungeon export <id> config <dark_gray>- <gray>Exportar configuracion (.zip)\n<white>/dungeon save <id> <nombre> <dark_gray>- <gray>Guardar estructura (.schem)\n<white>/dungeon export <id> all [nombre] <dark_gray>- <gray>Exportar todo\n<white>/dungeon import <id> <archivo> <dark_gray>- <gray>Importar config o estructura\n<white>/dungeon paste <id> <nombre> <dark_gray>- <gray>Pegar estructura en tu posicion\n<white>/dungeon wand <dark_gray>- <gray>Obtener el hacha de WorldEdit"
   created: "{prefix}<green>Dungeon <white>{dungeon}</white> creada. Configura su region con <white>/dungeon pos1</white>, <white>pos2</white> y <white>/dungeon region {dungeon}</white>."
@@ -99,6 +101,11 @@ join:
   cooldown: "{prefix}<red>Debes esperar <white>{time}</white> antes de volver a entrar a <white>{dungeon}</white>."
   not-running: "{prefix}<red>La dungeon <white>{dungeon}</white> no esta en marcha."
   no-permission: "{prefix}<red>No tienes permiso para entrar a <white>{dungeon}</white>."
+  req-level: "{prefix}<red>Necesitas nivel <white>{level}</white> para entrar a esta dungeon."
+  req-completed: "{prefix}<red>Primero debes completar <white>{required}</white>."
+  req-money: "{prefix}<red>La entrada cuesta <white>${amount}</white> y no tienes suficiente dinero."
+  req-item: "{prefix}<red>Necesitas <white>{amount}x {item}</white> para entrar."
+  paid: "{prefix}<gray>Se ha cobrado la entrada a la dungeon."
   title: "<gradient:#8e2de2:#4a00e0><bold>{dungeon_name}</bold></gradient>"
   subtitle: "<gray>La aventura comienza ahora"
 leave:
@@ -134,6 +141,54 @@ dungeon:
   cannot-start: "{prefix}<red>No se puede iniciar la dungeon: <white>{reason}</white>."
   complete-loot: "{prefix}<green>Dungeon completada. Podras saquear durante <white>{time}</white> segundos antes de ser teletransportado."
   fail-loot: "{prefix}<red>Dungeon fallida. Podras recoger loot durante <white>{time}</white> segundos antes de ser teletransportado."
+  wave-start: "{prefix}<gold><bold>Oleada {wave}/{waves}</bold></gold> <gray>¡Preparaos!"
+  wave-cleared: "{prefix}<green>Oleada <white>{wave}/{waves}</white> superada. <gray>La siguiente empieza en <white>{time}s</white>."
+  waves-cleared: "{prefix}<green><bold>¡Todas las oleadas superadas!</bold>"
+  door-open: "{prefix}<yellow>Se ha abierto una puerta."
+  key-drop: "{prefix}<gold><white>{player}</white> ha obtenido <white>{key}</white>."
+  key-used: "{prefix}<green>Has usado la llave."
+  chest-locked: "{prefix}<red>Este cofre esta cerrado. Necesitas la llave <white>{key}</white>."
+  checkpoint: "{prefix}<aqua>Punto de control alcanzado por <white>{player}</white>. Reapareceréis aqui."
+  respawn-checkpoint: "{prefix}<aqua>Has reaparecido en el ultimo punto de control."
+  reward: "{prefix}<gold>Recompensa: <white>{reward}</white>"
+  record-personal: "{prefix}<green>¡Nuevo record personal! <white>{time}</white>"
+  record-global: "{prefix}<gradient:#f7971e:#ffd200><bold>¡NUEVO RECORD DE LA DUNGEON!</bold></gradient> <white>{time}</white>"
+
+lobby:
+  joined: "{prefix}<gray>Sala de espera: <white>{players}/{min_players}</white> jugadores. La partida empieza al reunir el minimo."
+  waiting: "<yellow>Esperando jugadores <white>{players}/{min_players}</white>"
+  countdown: "<green>La dungeon empieza en <white>{time}s</white>"
+  countdown-start: "{prefix}<green>¡Ya sois suficientes! La dungeon empieza en <white>{time}</white>."
+  countdown-subtitle: "<gray>Preparaos..."
+  cancelled: "{prefix}<red>Cuenta atras cancelada: faltan jugadores (minimo <white>{min_players}</white>)."
+
+wave:
+  title: "<gold><bold>Oleada {wave}</bold></gold>"
+  subtitle: "<gray>de <white>{waves}</white>"
+
+tp:
+  success: "{prefix}<green>Teletransportado a <white>{dungeon}</white>."
+  warp-set: "{prefix}<green>Punto de tp de <white>{dungeon}</white> guardado en tu posicion."
+  warp-cleared: "{prefix}<yellow>Punto de tp de <white>{dungeon}</white> eliminado. /dungeon tp entrara directamente."
+
+top:
+  header: "{prefix}<gold><bold>Mejores tiempos</bold></gold> <dark_gray>| {dungeon_name}"
+  entry: "<gray>#{position} <white>{player}</white> <dark_gray>- <yellow>{time}</yellow> <dark_gray>({completions} completadas)"
+  empty: "<gray>Todavia nadie ha completado esta dungeon."
+
+stats:
+  header: "{prefix}<gold><bold>Estadisticas</bold></gold> <dark_gray>| <white>{player}</white>"
+  total: "<gray>Completadas: <white>{completions}</white> <dark_gray>| <gray>Fallidas: <white>{fails}</white> <dark_gray>| <gray>Muertes: <white>{deaths}</white>\n<gray>Mobs: <white>{kills}</white> <dark_gray>| <gray>Jefes: <white>{boss_kills}</white>"
+  dungeon: "<dark_gray>• <white>{dungeon_name}</white> <gray>x{completions} <dark_gray>| <gray>mejor: <yellow>{best}</yellow>"
+
+door:
+  not-found: "{prefix}<red>La puerta <white>{door}</white> no existe o no tiene bloques guardados."
+  opened: "{prefix}<green>Puerta <white>{door}</white> abierta."
+  closed: "{prefix}<green>Puerta <white>{door}</white> cerrada."
+
+markers:
+  shown: "{prefix}<green>Marcadores de <white>{dungeon}</white> visibles (solo para ti)."
+  hidden: "{prefix}<gray>Marcadores de <white>{dungeon}</white> ocultos."
 
 complete:
   title: "<gradient:#f7971e:#ffd200><bold>¡DUNGEON COMPLETADA!</bold></gradient>"
@@ -159,6 +214,7 @@ placeholder:
   empty: "-"
   boss-none: "Sin jefe"
   state:
+    waiting: "Esperando jugadores"
     idle: "Inactiva"
     running: "En marcha"
     completed: "Completada"

@@ -31,7 +31,9 @@ menus:
           - "<green>Disponible para entrar"
           - "<gray>Jugadores: <white>{players}/{max_players}</white>"
           - "<gray>Cooldown: <white>{cooldown}</white>"
-          - "<dark_gray>Clic para entrar"
+          - "<gray>Record: <yellow>{record}</yellow> <dark_gray>({record_holder})"
+          - "<gray>Tu mejor tiempo: <white>{my_best}</white>"
+          - "<dark_gray>Clic izq: entrar | Clic der: ir (tp)"
       dungeon-entry-active:
         material: GOLD_BLOCK
         name: "<gold><bold>{name}</bold></gold>"
@@ -39,8 +41,9 @@ menus:
           - "<gray>Estado: <white>{state}</white>"
           - "<yellow>Dungeon activa"
           - "<gray>Jugadores: <white>{players}/{max_players}</white>"
-          - "<gray>Cooldown: <white>{cooldown}</white>"
-          - "<dark_gray>Clic para unirte"
+          - "<gray>Oleada: <white>{wave}/{waves}</white>"
+          - "<gray>Record: <yellow>{record}</yellow> <dark_gray>({record_holder})"
+          - "<dark_gray>Clic izq: unirte | Clic der: ir (tp)"
       dungeon-entry-cooldown:
         material: RED_CONCRETE
         name: "<red><bold>{name}</bold></red>"

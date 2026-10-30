@@ -63,6 +63,12 @@ public final class PlaceholderService {
             result = result.replace("{kills_remaining}", String.valueOf(Math.max(0, context.getRequiredKills() - context.getKills())));
             result = result.replace("{progress}", String.format(Locale.US, "%.0f", context.getProgress() * 100.0D));
             result = result.replace("{progress_bar}", progressBar(context.getProgress()));
+            result = result.replace("{wave}", String.valueOf(context.getCurrentWave()));
+            result = result.replace("{waves}", String.valueOf(context.getWaveCount()));
+            result = result.replace("{lobby_time}", String.valueOf(context.getLobbySecondsLeft()));
+            result = result.replace("{min_players}", String.valueOf(Math.max(1, dungeon.getSettings().getMinPlayers())));
+            result = result.replace("{checkpoint}", context.getLastCheckpoint().isEmpty()
+                    ? plugin.getMessages().raw("placeholder.empty") : context.getLastCheckpoint());
         } else {
             result = result.replace("{dungeon}", "");
             result = result.replace("{dungeon_id}", "");
@@ -79,6 +85,10 @@ public final class PlaceholderService {
             result = result.replace("{kills_remaining}", "0");
             result = result.replace("{progress}", "0");
             result = result.replace("{progress_bar}", progressBar(0.0D));
+            result = result.replace("{wave}", "0");
+            result = result.replace("{waves}", "0");
+            result = result.replace("{lobby_time}", "0");
+            result = result.replace("{checkpoint}", "");
         }
 
         if (bossContext != null && !bossContext.isDead()) {

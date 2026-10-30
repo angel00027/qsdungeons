@@ -4,7 +4,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.boss.BossDefinition;
+import org.qs.qsdungeons.dungeon.Checkpoint;
 import org.qs.qsdungeons.dungeon.ChestSpawn;
+import org.qs.qsdungeons.dungeon.DungeonDoor;
+import org.qs.qsdungeons.dungeon.DungeonKey;
 import org.qs.qsdungeons.dungeon.Dungeon;
 import org.qs.qsdungeons.dungeon.DungeonSettings;
 import org.qs.qsdungeons.dungeon.Region;
@@ -75,6 +78,7 @@ public final class DungeonRepository {
             if (dungeon.getExit() == null) {
                 dungeon.setExit(dungeon.getEntry());
             }
+            dungeon.setWarp(LocationSerializer.read(yaml, "warp"));
             DungeonSettings defaults = plugin.getConfigManager().getDefaultSettings();
             dungeon.setSettings(DungeonSettings.read(yaml.getConfigurationSection("settings"), defaults));
 
@@ -97,6 +101,25 @@ public final class DungeonRepository {
                 for (String rewardId : rewards.getKeys(false)) {
                     RewardBlock reward = RewardBlock.read(rewardId, rewards.getConfigurationSection(rewardId));
                     dungeon.getRewards().put(rewardId, reward);
+                }
+            }
+            ConfigurationSection doors = yaml.getConfigurationSection("doors");
+            if (doors != null) {
+                for (String doorId : doors.getKeys(false)) {
+                    dungeon.getDoors().put(doorId, DungeonDoor.read(doorId, doors.getConfigurationSection(doorId)));
+                }
+            }
+            ConfigurationSection keys = yaml.getConfigurationSection("keys");
+            if (keys != null) {
+                for (String keyId : keys.getKeys(false)) {
+                    dungeon.getKeys().put(keyId, DungeonKey.read(keyId, keys.getConfigurationSection(keyId)));
+                }
+            }
+            ConfigurationSection checkpoints = yaml.getConfigurationSection("checkpoints");
+            if (checkpoints != null) {
+                for (String checkpointId : checkpoints.getKeys(false)) {
+                    dungeon.getCheckpoints().put(checkpointId,
+                            Checkpoint.read(checkpointId, checkpoints.getConfigurationSection(checkpointId)));
                 }
             }
 
@@ -172,6 +195,9 @@ public final class DungeonRepository {
         if (dungeon.getExit() != null) {
             LocationSerializer.write(yaml, "exit", dungeon.getExit());
         }
+        if (dungeon.getWarp() != null) {
+            LocationSerializer.write(yaml, "warp", dungeon.getWarp());
+        }
         dungeon.getSettings().write(yaml.createSection("settings"));
 
         ConfigurationSection spawns = yaml.createSection("spawns");
@@ -185,6 +211,18 @@ public final class DungeonRepository {
         ConfigurationSection rewards = yaml.createSection("rewards");
         for (Map.Entry<String, RewardBlock> entry : dungeon.getRewards().entrySet()) {
             entry.getValue().write(rewards.createSection(entry.getKey()));
+        }
+        ConfigurationSection doors = yaml.createSection("doors");
+        for (Map.Entry<String, DungeonDoor> entry : dungeon.getDoors().entrySet()) {
+            entry.getValue().write(doors.createSection(entry.getKey()));
+        }
+        ConfigurationSection keys = yaml.createSection("keys");
+        for (Map.Entry<String, DungeonKey> entry : dungeon.getKeys().entrySet()) {
+            entry.getValue().write(keys.createSection(entry.getKey()));
+        }
+        ConfigurationSection checkpoints = yaml.createSection("checkpoints");
+        for (Map.Entry<String, Checkpoint> entry : dungeon.getCheckpoints().entrySet()) {
+            entry.getValue().write(checkpoints.createSection(entry.getKey()));
         }
 
         saveYaml(yaml, new File(folder, "dungeon.yml"));

@@ -16,9 +16,39 @@ public final class SpawnerRuntime {
     private long nextSpawnAt;
     private boolean initialSpawned;
     private int pendingSpawns;
+    // Cantidad total tras aplicar el escalado por jugadores.
+    private int amount;
+    // La oleada de este spawn ya empezo / ya fue superada.
+    private boolean active;
+    private boolean finished;
 
     public SpawnerRuntime(SpawnPoint point) {
         this.point = point;
+        this.amount = point.getAmount();
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public void setAmount(int amount) {
+        this.amount = Math.max(1, amount);
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
     }
 
     public SpawnPoint getPoint() {

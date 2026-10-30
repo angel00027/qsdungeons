@@ -12,6 +12,8 @@ public final class Keys {
     public static final NamespacedKey BOSS = new NamespacedKey("qsdungeons", "boss");
     public static final NamespacedKey ENTITY = new NamespacedKey("qsdungeons", "entity");
     public static final NamespacedKey TEST = new NamespacedKey("qsdungeons", "test");
+    public static final NamespacedKey KEY_ITEM = new NamespacedKey("qsdungeons", "key_item");
+    public static final NamespacedKey MARKER = new NamespacedKey("qsdungeons", "marker");
 
     private Keys() {
     }

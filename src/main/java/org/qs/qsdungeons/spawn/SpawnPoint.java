@@ -30,6 +30,8 @@ public final class SpawnPoint {
     private double radius = 3.0D;
     private int minPlayerDistance = 0;
     private boolean requireGround = true;
+    // Oleada a la que pertenece. Las oleadas se lanzan en orden ascendente.
+    private int wave = 1;
 
     private double health = 0.0D;
     private double damage = 0.0D;
@@ -67,6 +69,7 @@ public final class SpawnPoint {
         spawn.radius = Math.max(0.0D, section.getDouble("radius", spawn.radius));
         spawn.minPlayerDistance = Math.max(0, section.getInt("min-player-distance", spawn.minPlayerDistance));
         spawn.requireGround = section.getBoolean("require-ground", spawn.requireGround);
+        spawn.wave = Math.max(1, section.getInt("wave", spawn.wave));
         spawn.health = section.getDouble("health", spawn.health);
         spawn.damage = section.getDouble("damage", spawn.damage);
         spawn.speed = section.getDouble("speed", spawn.speed);
@@ -110,6 +113,7 @@ public final class SpawnPoint {
         section.set("radius", radius);
         section.set("min-player-distance", minPlayerDistance);
         section.set("require-ground", requireGround);
+        section.set("wave", wave);
         if (health > 0) {
             section.set("health", health);
         }
@@ -156,6 +160,14 @@ public final class SpawnPoint {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    public int getWave() {
+        return wave;
+    }
+
+    public void setWave(int wave) {
+        this.wave = Math.max(1, wave);
     }
 
     public String getId() {

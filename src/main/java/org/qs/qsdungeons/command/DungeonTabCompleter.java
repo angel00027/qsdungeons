@@ -23,11 +23,12 @@ import java.util.Locale;
  */
 public final class DungeonTabCompleter implements TabCompleter {
 
-    private static final List<String> BASE = List.of("help", "list", "info", "join", "leave", "menu");
+    private static final List<String> BASE = List.of("help", "list", "info", "join", "leave", "menu",
+            "tp", "top", "stats");
     private static final List<String> ADMIN = List.of("create", "delete", "enable", "disable",
             "pos1", "pos2", "region", "entry", "exit", "spawn", "boss", "loot", "chest",
             "reward", "set", "start", "stop", "reset", "reload", "editor", "cooldown-location",
-            "cooldown-protection", "protection");
+            "cooldown-protection", "protection", "setwarp", "door", "markers");
     private static final List<String> TRANSFER = List.of("export", "import", "save", "paste",
             "wand", "structures");
 
@@ -80,6 +81,34 @@ public final class DungeonTabCompleter implements TabCompleter {
             }
             case "menu" -> {
                 return List.of();
+            }
+            case "tp", "top", "markers" -> {
+                if (args.length == 2) {
+                    return dungeonIds(args[1]);
+                }
+                if (args.length == 3 && sub.equals("tp") && sender.hasPermission("qsdungeons.tp.others")) {
+                    return null;
+                }
+                return List.of();
+            }
+            case "stats" -> {
+                return args.length == 2 ? null : List.of();
+            }
+            case "setwarp" -> {
+                if (args.length == 2) {
+                    return dungeonIds(args[1]);
+                }
+                return args.length == 3 ? filter(List.of("clear"), args[2]) : List.of();
+            }
+            case "door" -> {
+                if (args.length == 2) {
+                    return dungeonIds(args[1]);
+                }
+                if (args.length == 3) {
+                    Dungeon dungeon = plugin.getDungeonManager().getDungeon(args[1]);
+                    return dungeon == null ? List.of() : filter(new ArrayList<>(dungeon.getDoors().keySet()), args[2]);
+                }
+                return args.length == 4 ? filter(List.of("open", "close"), args[3]) : List.of();
             }
             case "cooldown-location" -> {
                 return filter(List.of("clear"), args[args.length - 1]);

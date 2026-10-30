@@ -24,6 +24,7 @@ desactivan las funciones que dependen de ellas).
 10. [MythicMobs](#mythicmobs)
 11. [WorldEdit e import/export](#worldedit-e-importexport)
 12. [Compilar](#compilar)
+13. [Funciones avanzadas](#funciones-avanzadas)
 
 ---
 
@@ -826,6 +827,64 @@ Dependencias opcionales usadas en tiempo de compilación (todas `provided`):
 - `com.sk89q.worldedit:worldedit-bukkit:7.3.9`
 - `com.sk89q.worldedit:worldedit-core:7.3.9`
 - `io.lumine:Mythic-Dist:5.6.1`
+
+---
+
+## Funciones avanzadas
+
+Todo se configura desde el editor (`/dungeon editor <id>`). En el editor de la
+dungeon están los botones **Ajustes avanzados**, **Puertas**, **Llaves**,
+**Checkpoints**, **Ver marcadores**, **Punto de /dungeon tp** y **Ranking**.
+
+| Función | Dónde se configura | Claves en `dungeon.yml` |
+|---|---|---|
+| Oleadas por fases | Editor de spawn → **Oleada** | `spawns.<id>.wave`, `settings.wave-delay-seconds` |
+| Sala de espera | Ajustes avanzados → **Sala de espera** + Ajustes → **Jugadores mínimos** | `settings.lobby-seconds`, `settings.min-players` |
+| Escalado por jugadores | Ajustes avanzados → **Escalado** de vida, daño y cantidad | `settings.scaling.*-per-player` (0.25 = +25 % por jugador extra) |
+| Recompensa final | Ajustes avanzados → tabla de loot, dinero (Vault), XP | `settings.reward.*` |
+| Requisitos de entrada | Ajustes avanzados → nivel, precio, dungeons completadas, ticket | `settings.requirements.*` |
+| Música ambiente | Ajustes avanzados → **Música ambiente** | `settings.ambient.*` |
+| Música y cinemática del jefe | Editor de jefe (fila inferior) | `bosses/<id>.yml` → `cinematic.*`, `music.*` |
+| Puertas | **Puertas** | `doors.<id>` (región + bloques guardados, `trigger: WAVE/KEY/BOSS/MANUAL`) |
+| Llaves | **Llaves**, y en el cofre → **Llave necesaria** | `keys.<id>`, `chests.<id>.required-key` |
+| Checkpoints | **Checkpoints** | `checkpoints.<id>` |
+| Punto de tp | **Punto de /dungeon tp** o `/dungeon setwarp <id>` | `warp` |
+
+- **Oleadas**: cada spawn tiene un número de oleada. Arranca la más baja y la
+  siguiente empieza cuando no quedan mobs ni spawns pendientes de la actual
+  (tras `wave-delay-seconds`). Con `bosses-after-waves: true` los jefes salen al
+  terminar la última. Las puertas `WAVE` con valor `N` se abren al superar la
+  oleada `N`.
+- **Sala de espera**: se usa si `lobby-seconds > 0` o `min-players > 1`. La
+  cuenta atrás empieza al reunir el mínimo y se cancela si alguien se va.
+- **Checkpoints**: el primer jugador que pasa por uno lo activa para todo el
+  grupo. Al morir (con `leave-on-death: false`) se reaparece en el último; si
+  no hay, en la entrada.
+- **Llaves**: las suelta el spawn o jefe elegido. Clic derecho con la llave
+  sobre un bloque de su puerta o sobre su cofre. Solo valen en su dungeon y se
+  retiran del inventario al salir.
+- **Cinemática del jefe**: título, sonido y partículas solo para los jugadores
+  dentro del radio (0 = toda la dungeon); el jefe aparece tras la pausa.
+- **Música**: los sonidos aceptan claves vanilla (`music_disc.otherside`) o de
+  resource pack (`nexo:mi_musica`). Cerca de un jefe con música suena la suya
+  en lugar de la ambiente. Ajusta la "duración de la pista" a lo que dura el
+  audio para que se repita sin cortes.
+- **Marcadores**: hologramas y partículas visibles solo para ti con cada spawn
+  (color por oleada, tipo, entidad, cantidad, radio y llaves que suelta),
+  jefes, puertas, checkpoints, cofres, entrada/salida/tp y el borde de la región.
+  También con `/dungeon markers [id]`.
+
+Comandos nuevos: `/dungeon tp <id> [jugador]`, `/dungeon top <id>`,
+`/dungeon stats [jugador]`, `/dungeon setwarp <id> [clear]`,
+`/dungeon markers [id]`, `/dungeon door <id> <puerta> <open|close>`.
+Permisos nuevos: `qsdungeons.tp` (todos), `qsdungeons.tp.others` y
+`qsdungeons.requirements.bypass` (op).
+
+Placeholders nuevos: `{wave}`, `{waves}`, `{lobby_time}`, `{checkpoint}` y en
+PlaceholderAPI `%qsdungeons_stats_<completions|fails|deaths|kills|boss_kills>%`,
+`%qsdungeons_<id>_stats_<campo|best_time>%`, `%qsdungeons_<id>_record%`,
+`%qsdungeons_<id>_record_holder%`, `%qsdungeons_<id>_top_<n>_<name|time>%`.
+Las estadísticas se guardan en `data/stats.yml`.
 
 ---
 

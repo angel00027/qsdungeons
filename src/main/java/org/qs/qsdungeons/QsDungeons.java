@@ -10,10 +10,12 @@ import org.qs.qsdungeons.command.DungeonTabCompleter;
 import org.qs.qsdungeons.config.ConfigManager;
 import org.qs.qsdungeons.config.Messages;
 import org.qs.qsdungeons.dungeon.DungeonManager;
+import org.qs.qsdungeons.editor.MarkerService;
 import org.qs.qsdungeons.gui.GuiListener;
 import org.qs.qsdungeons.gui.GuiManager;
 import org.qs.qsdungeons.listener.DungeonEntityListener;
 import org.qs.qsdungeons.listener.DungeonEntryListener;
+import org.qs.qsdungeons.listener.DungeonFeatureListener;
 import org.qs.qsdungeons.listener.DungeonLootListener;
 import org.qs.qsdungeons.listener.DungeonProtectionListener;
 import org.qs.qsdungeons.loot.LootManager;
@@ -21,8 +23,10 @@ import org.qs.qsdungeons.placeholder.DungeonPlaceholderExpansion;
 import org.qs.qsdungeons.placeholder.PlaceholderService;
 import org.qs.qsdungeons.spawn.MobSpawner;
 import org.qs.qsdungeons.spawn.MythicMobsHook;
+import org.qs.qsdungeons.stats.StatsManager;
 import org.qs.qsdungeons.storage.DungeonArchive;
 import org.qs.qsdungeons.storage.DungeonRepository;
+import org.qs.qsdungeons.util.EconomyHook;
 import org.qs.qsdungeons.worldedit.WorldEditHook;
 
 /**
@@ -44,6 +48,10 @@ public final class QsDungeons extends org.bukkit.plugin.java.JavaPlugin {
     private GuiManager guiManager;
     private DungeonPlaceholderExpansion placeholderExpansion;
     private BukkitTask tickTask;
+    private BukkitTask statsTask;
+    private StatsManager statsManager;
+    private MarkerService markerService;
+    private final EconomyHook economy = new EconomyHook();
 
     @Override
     public void onEnable() {
@@ -68,13 +76,24 @@ public final class QsDungeons extends org.bukkit.plugin.java.JavaPlugin {
                 ? new WorldEditHook(this)
                 : null;
         this.dungeonManager = new DungeonManager(this);
+        this.statsManager = new StatsManager(this);
+        this.statsManager.load();
+        this.markerService = new MarkerService(this);
         this.guiManager = new GuiManager(this);
 
         registerListeners();
         registerCommand();
         registerPlaceholderExpansion();
         this.dungeonManager.load();
+        // Mobs de partidas anteriores que quedaron guardados en el mundo.
+        Bukkit.getScheduler().runTask(this, () -> {
+            int removed = dungeonManager.cleanupLoadedOrphans();
+            if (removed > 0) {
+                getLogger().info("Eliminados " + removed + " mob(s) huerfanos de dungeons.");
+            }
+        });
         startTicker();
+        statsTask = Bukkit.getScheduler().runTaskTimer(this, statsManager::save, 1200L, 1200L);
 
         getLogger().info("QSDungeons habilitado. WorldEdit: "
                 + (worldEditHook != null ? "si" : "no")
@@ -88,6 +107,16 @@ public final class QsDungeons extends org.bukkit.plugin.java.JavaPlugin {
         if (tickTask != null) {
             tickTask.cancel();
             tickTask = null;
+        }
+        if (statsTask != null) {
+            statsTask.cancel();
+            statsTask = null;
+        }
+        if (markerService != null) {
+            markerService.hideAll();
+        }
+        if (statsManager != null) {
+            statsManager.save();
         }
         if (placeholderExpansion != null) {
             placeholderExpansion.unregister();
@@ -111,6 +140,7 @@ public final class QsDungeons extends org.bukkit.plugin.java.JavaPlugin {
         manager.registerEvents(new DungeonLootListener(this), this);
         manager.registerEvents(new DungeonProtectionListener(this), this);
         manager.registerEvents(new DungeonEntityListener(this), this);
+        manager.registerEvents(new DungeonFeatureListener(this), this);
         manager.registerEvents(new GuiListener(this), this);
     }
 
@@ -146,6 +176,18 @@ public final class QsDungeons extends org.bukkit.plugin.java.JavaPlugin {
                 dungeonManager.tick();
             }
         }, period, period);
+    }
+
+    public StatsManager getStatsManager() {
+        return statsManager;
+    }
+
+    public MarkerService getMarkerService() {
+        return markerService;
+    }
+
+    public EconomyHook getEconomy() {
+        return economy;
     }
 
     public ConfigManager getConfigManager() {

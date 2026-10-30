@@ -5,10 +5,16 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.qs.qsdungeons.QsDungeons;
 import org.qs.qsdungeons.dungeon.instance.DungeonInstance;
+import org.qs.qsdungeons.stats.StatsManager;
 import org.qs.qsdungeons.storage.LocationSerializer;
+import org.qs.qsdungeons.util.EconomyHook;
+import org.qs.qsdungeons.util.Tags;
 import org.qs.qsdungeons.util.Text;
 
 import java.io.File;
@@ -35,6 +41,7 @@ public final class DungeonManager {
     private final Map<String, Long> autoEnterAttempts = new HashMap<>();
     private final Map<UUID, Long> autoEnterSuppressed = new HashMap<>();
     private final Map<UUID, Location> respawnExit = new HashMap<>();
+    private final Map<UUID, Location> respawnInside = new HashMap<>();
     private File cooldownFile;
 
     public DungeonManager(QsDungeons plugin) {
@@ -181,12 +188,18 @@ public final class DungeonManager {
         }
 
         DungeonInstance instance = getInstance(dungeon.getId());
-        if (instance == null || !instance.isRunning()) {
+        boolean rejoin = instance != null && instance.getLeftPlayers().contains(player.getUniqueId());
+        if (!rejoin && !checkRequirements(player, dungeon)) {
+            return false;
+        }
+        if (instance == null || (!instance.isRunning() && !instance.isWaiting())) {
             if (!dungeon.getSettings().isAutoStart()) {
                 plugin.getMessages().send(player, "join.not-running", Map.of("dungeon", dungeon.getId()));
                 return false;
             }
-            if (!start(dungeon, null)) {
+            DungeonSettings settings = dungeon.getSettings();
+            boolean lobby = settings.getLobbySeconds() > 0 || settings.getMinPlayers() > 1;
+            if (!(lobby ? openLobby(dungeon) : start(dungeon, null))) {
                 plugin.getMessages().send(player, "join.not-running", Map.of("dungeon", dungeon.getId()));
                 return false;
             }
@@ -195,12 +208,133 @@ public final class DungeonManager {
         if (instance == null) {
             return false;
         }
-        return instance.addPlayer(player);
+        if (!instance.addPlayer(player)) {
+            return false;
+        }
+        if (!rejoin) {
+            chargeRequirements(player, dungeon);
+        }
+        return true;
+    }
+
+    /**
+     * Teletransporta al punto de tp de la dungeon. Si no tiene uno, entra
+     * directamente.
+     */
+    public boolean teleport(Player player, Dungeon dungeon) {
+        if (player == null || dungeon == null) {
+            return false;
+        }
+        if (dungeon.getWarp() == null || dungeon.getWarp().getWorld() == null) {
+            return join(player, dungeon);
+        }
+        if (getPlayerInstance(player) != null) {
+            plugin.getMessages().send(player, "join.already", Map.of("dungeon", dungeon.getId()));
+            return false;
+        }
+        player.teleport(dungeon.getWarp());
+        plugin.getMessages().send(player, "tp.success", Map.of("dungeon", dungeon.getId()));
+        return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Requisitos de entrada
+    // ---------------------------------------------------------------------
+
+    private boolean bypassRequirements(Player player) {
+        return player.isOp() || player.hasPermission("qsdungeons.requirements.bypass");
+    }
+
+    public boolean checkRequirements(Player player, Dungeon dungeon) {
+        if (bypassRequirements(player)) {
+            return true;
+        }
+        DungeonSettings settings = dungeon.getSettings();
+        if (settings.getRequiredLevel() > 0 && player.getLevel() < settings.getRequiredLevel()) {
+            plugin.getMessages().send(player, "join.req-level", Map.of(
+                    "level", String.valueOf(settings.getRequiredLevel()), "dungeon", dungeon.getId()));
+            return false;
+        }
+        for (String required : settings.getRequiredDungeons()) {
+            if (!plugin.getStatsManager().hasCompleted(player.getUniqueId(), required)) {
+                Dungeon other = getDungeon(required);
+                plugin.getMessages().send(player, "join.req-completed", Map.of(
+                        "required", other == null ? required : Text.plain(Text.parse(other.getDisplayName())),
+                        "dungeon", dungeon.getId()));
+                return false;
+            }
+        }
+        if (settings.getEntryCost() > 0) {
+            if (!plugin.getEconomy().isAvailable()) {
+                plugin.getLogger().warning("La dungeon '" + dungeon.getId()
+                        + "' cobra entrada pero Vault/economia no esta disponible; no se cobrara.");
+            } else if (!plugin.getEconomy().has(player, settings.getEntryCost())) {
+                plugin.getMessages().send(player, "join.req-money", Map.of(
+                        "amount", EconomyHook.format(settings.getEntryCost()), "dungeon", dungeon.getId()));
+                return false;
+            }
+        }
+        ItemStack item = settings.getEntryItem();
+        if (item != null && !player.getInventory().containsAtLeast(item, item.getAmount())) {
+            plugin.getMessages().send(player, "join.req-item", Map.of(
+                    "item", itemName(item), "amount", String.valueOf(item.getAmount()),
+                    "dungeon", dungeon.getId()));
+            return false;
+        }
+        return true;
+    }
+
+    private void chargeRequirements(Player player, Dungeon dungeon) {
+        if (bypassRequirements(player)) {
+            return;
+        }
+        DungeonSettings settings = dungeon.getSettings();
+        boolean paid = false;
+        if (settings.getEntryCost() > 0 && plugin.getEconomy().isAvailable()) {
+            paid = plugin.getEconomy().withdraw(player, settings.getEntryCost());
+        }
+        ItemStack item = settings.getEntryItem();
+        if (item != null) {
+            player.getInventory().removeItem(item.clone());
+            paid = true;
+        }
+        if (paid) {
+            plugin.getMessages().send(player, "join.paid", Map.of("dungeon", dungeon.getId()));
+        }
+    }
+
+    public static String itemName(ItemStack item) {
+        if (item.hasItemMeta() && item.getItemMeta().displayName() != null) {
+            return Text.plain(item.getItemMeta().displayName());
+        }
+        String raw = item.getType().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ');
+        return Character.toUpperCase(raw.charAt(0)) + raw.substring(1);
+    }
+
+    /**
+     * Abre una sala de espera para la dungeon.
+     */
+    public boolean openLobby(Dungeon dungeon) {
+        if (dungeon == null || instances.containsKey(dungeon.getId()) || !dungeon.isReady()) {
+            return false;
+        }
+        DungeonInstance instance = new DungeonInstance(plugin, dungeon);
+        instances.put(dungeon.getId(), instance);
+        instance.openLobby();
+        return true;
     }
 
     public boolean start(Dungeon dungeon, CommandSender sender) {
         if (dungeon == null) {
             return false;
+        }
+        DungeonInstance existing = instances.get(dungeon.getId());
+        if (existing != null && existing.isWaiting()) {
+            existing.start();
+            if (sender != null) {
+                plugin.getMessages().send(sender, "dungeon.started", Map.of("dungeon", dungeon.getId()));
+            }
+            return true;
         }
         if (instances.containsKey(dungeon.getId())) {
             if (sender != null) {
@@ -312,6 +446,49 @@ public final class DungeonManager {
         if (instance != null) {
             stopInstance(instance, false);
         }
+    }
+
+    /**
+     * Activa o desactiva una dungeon. Al desactivarla se detiene la partida en
+     * curso al instante y se eliminan sus mobs y jefes.
+     */
+    public void setEnabled(Dungeon dungeon, boolean enabled) {
+        if (dungeon == null) {
+            return;
+        }
+        dungeon.setEnabled(enabled);
+        if (!enabled) {
+            stopNow(dungeon, plugin.getMessages().raw("dungeon.reason-admin"));
+        }
+    }
+
+    /**
+     * Elimina una entidad de dungeon que ya no pertenece a ninguna partida
+     * activa (mobs que quedaron en chunks descargados, reinicios, etc.).
+     */
+    public boolean cleanupOrphan(Entity entity) {
+        if (entity == null || entity instanceof Player
+                || !Tags.isDungeonEntity(entity) || Tags.isTestEntity(entity)) {
+            return false;
+        }
+        DungeonInstance instance = getInstance(Tags.dungeonOf(entity));
+        if (instance != null && instance.owns(entity.getUniqueId())) {
+            return false;
+        }
+        entity.remove();
+        return true;
+    }
+
+    public int cleanupLoadedOrphans() {
+        int removed = 0;
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : new ArrayList<>(world.getEntities())) {
+                if (cleanupOrphan(entity)) {
+                    removed++;
+                }
+            }
+        }
+        return removed;
     }
 
     public void stopAllInstances() {
@@ -428,6 +605,7 @@ public final class DungeonManager {
         playerInstances.remove(player.getUniqueId());
         autoEnterSuppressed.remove(player.getUniqueId());
         respawnExit.remove(player.getUniqueId());
+        respawnInside.remove(player.getUniqueId());
     }
 
     public void handleDeath(Player player) {
@@ -435,7 +613,16 @@ public final class DungeonManager {
         if (instance == null) {
             return;
         }
+        if (instance.isRunning()) {
+            plugin.getStatsManager().add(player.getUniqueId(), player.getName(),
+                    instance.getDungeon().getId(), StatsManager.DEATHS, 1);
+        }
         if (!instance.getSettings().isLeaveOnDeath()) {
+            // Sigue en la partida: reaparece en el ultimo checkpoint o la entrada.
+            Location inside = instance.getRespawnLocation();
+            if (inside != null) {
+                respawnInside.put(player.getUniqueId(), inside);
+            }
             return;
         }
         Location exit = instance.getDungeon().getExit() != null
@@ -447,14 +634,23 @@ public final class DungeonManager {
         instance.removePlayer(player, false);
     }
 
-    public void handleRespawn(Player player) {
+    /**
+     * @return la ubicacion donde debe reaparecer el jugador, o null si no la
+     *         controla la dungeon.
+     */
+    public Location handleRespawn(Player player) {
+        Location inside = respawnInside.remove(player.getUniqueId());
+        if (inside != null && getPlayerInstance(player) != null) {
+            plugin.getMessages().send(player, "dungeon.respawn-checkpoint");
+            return inside;
+        }
         Location exit = respawnExit.remove(player.getUniqueId());
         if (exit == null) {
-            return;
+            return null;
         }
         suppressAutoEnter(player, 3000L);
-        player.teleport(exit);
         plugin.getMessages().send(player, "leave.respawn");
+        return exit;
     }
 
     public void suppressAutoEnter(Player player, long millis) {

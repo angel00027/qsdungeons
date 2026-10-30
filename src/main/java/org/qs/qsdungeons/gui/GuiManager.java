@@ -61,14 +61,16 @@ public final class GuiManager {
             "type", "entity", "amount", "max-alive", "respawn-seconds", "spawn-interval-seconds",
             "radius", "min-player-distance", "require-ground", "health", "damage", "speed",
             "follow-range", "name", "glowing", "baby", "ai", "persistent",
-            "clear-vanilla-drops", "burn-in-daylight", "loot-table", "location"
+            "clear-vanilla-drops", "burn-in-daylight", "loot-table", "location", "wave"
     };
 
     private static final String[] BOSS_ITEMS = {
             "type", "entity", "health", "damage", "speed", "follow-range", "name", "glowing",
             "baby", "ai", "persistent", "clear-vanilla-drops", "announce-spawn",
             "announce-death", "burn-in-daylight", "loot-table", "location", "bossbar-enabled", "bossbar-title",
-            "bossbar-color", "bossbar-style", "bossbar-radius"
+            "bossbar-color", "bossbar-style", "bossbar-radius", "cinematic-enabled", "cinematic-delay",
+            "cinematic-radius", "cinematic-title", "cinematic-subtitle", "cinematic-sound",
+            "cinematic-particle", "music-sound", "music-interval", "music-radius"
     };
 
     private static final List<String> BOSS_BAR_COLORS = List.of(
@@ -82,11 +84,13 @@ public final class GuiManager {
     private final Map<UUID, Prompt> prompts = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<UUID, Location[]> corners = new HashMap<>();
     private final Map<UUID, BukkitTask> playerMenuTasks = new java.util.concurrent.ConcurrentHashMap<>();
+    private final FeatureMenus features;
 
     public GuiManager(QsDungeons plugin) {
         this.plugin = plugin;
         this.config = new GuiConfig(plugin);
         this.playerConfig = new GuiConfig(plugin, "player-menus.yml");
+        this.features = new FeatureMenus(plugin, this);
         this.config.load();
         this.playerConfig.load();
     }
@@ -222,6 +226,18 @@ public final class GuiManager {
             ph.put("cooldown_seconds", String.valueOf(Math.max(0L, cooldown)));
             ph.put("available", cooldown > 0 ? "No (cooldown)" : dungeon.isReady() ? "Si" : "No");
             ph.put("world", dungeon.getRegion() == null ? "-" : dungeon.getRegion().getWorldName());
+            List<org.qs.qsdungeons.stats.StatsManager.Entry> top =
+                    plugin.getStatsManager().top(dungeon.getId(), 1);
+            ph.put("record", top.isEmpty() ? "-" : duration(top.get(0).seconds()));
+            ph.put("record_holder", top.isEmpty() ? "-" : top.get(0).name());
+            long best = plugin.getStatsManager().get(player.getUniqueId(), dungeon.getId(),
+                    org.qs.qsdungeons.stats.StatsManager.BEST_TIME);
+            ph.put("my_best", best <= 0 ? "-" : duration(best));
+            ph.put("my_completions", String.valueOf(plugin.getStatsManager().get(player.getUniqueId(),
+                    dungeon.getId(), org.qs.qsdungeons.stats.StatsManager.COMPLETIONS)));
+            ph.put("wave", instance == null ? "0" : String.valueOf(instance.getCurrentWave()));
+            ph.put("waves", instance == null ? "0" : String.valueOf(instance.getWaveCount()));
+            ph.put("min_players", String.valueOf(Math.max(1, dungeon.getSettings().getMinPlayers())));
             entries.add(new ListEntry(dungeon.getId(), ph));
             templates.add(cooldown > 0 ? "dungeon-entry-cooldown"
                     : instance != null && instance.isRunning()
@@ -234,20 +250,37 @@ public final class GuiManager {
             }
         }
         fillPlayerDynamic(inventory, holder, entries, templates);
-        navigation(inventory, holder, "player-dungeons", "main", holder.getPage());
+        // El menu de jugadores no tiene menu padre: "volver" solo lo cierra.
+        navigation(inventory, holder, "player-dungeons", null, holder.getPage());
     }
 
+    /**
+     * Refresca cada segundo los menus que muestran el estado de las partidas
+     * (jugadores, estado...) mientras sigan abiertos.
+     */
     private void startPlayerMenuRefresh(Player player) {
         stopPlayerMenuRefresh(player);
         UUID uuid = player.getUniqueId();
+        if (!(player.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder opened)) {
+            return;
+        }
         BukkitTask task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             if (!player.isOnline()
-                    || !(player.getOpenInventory().getTopInventory().getHolder() instanceof GuiHolder holder)
-                    || !holder.getMenu().equals("player-dungeons")) {
+                    || player.getOpenInventory().getTopInventory().getHolder() != opened) {
                 stopPlayerMenuRefresh(player);
                 return;
             }
-            renderPlayerDungeons(player, holder, holder.getInventory());
+            switch (opened.getMenu()) {
+                case "player-dungeons" -> renderPlayerDungeons(player, opened, opened.getInventory());
+                case "dungeon-list" -> renderDungeonList(opened, opened.getInventory());
+                case "dungeon-editor" -> {
+                    Dungeon dungeon = dungeon(opened.getDungeonId());
+                    if (dungeon != null) {
+                        renderDungeonEditor(opened, opened.getInventory(), dungeon);
+                    }
+                }
+                default -> stopPlayerMenuRefresh(player);
+            }
         }, 20L, 20L);
         playerMenuTasks.put(uuid, task);
     }
@@ -265,6 +298,13 @@ public final class GuiManager {
     public void openDungeonList(Player player, int page) {
         GuiHolder holder = new GuiHolder("dungeon-list", null, null, page);
         Inventory inventory = create(holder);
+        renderDungeonList(holder, inventory);
+        open(player, inventory);
+        startPlayerMenuRefresh(player);
+    }
+
+    private void renderDungeonList(GuiHolder holder, Inventory inventory) {
+        int page = holder.getPage();
         List<ListEntry> entries = new ArrayList<>();
         for (Dungeon dungeon : sortedDungeons()) {
             DungeonInstance instance = plugin.getDungeonManager().getInstance(dungeon.getId());
@@ -287,7 +327,6 @@ public final class GuiManager {
         fillDynamic(inventory, holder, "dungeon-list", "dungeon-entry", entries, "dungeon.entry");
         navigation(inventory, holder, "dungeon-list", "main", page);
         button(inventory, holder, "dungeon-list", "create", "create-dungeon");
-        open(player, inventory);
     }
 
     public void openDungeonEditor(Player player, Dungeon dungeon) {
@@ -297,6 +336,12 @@ public final class GuiManager {
         }
         GuiHolder holder = new GuiHolder("dungeon-editor", dungeon.getId(), null, 0);
         Inventory inventory = create(holder);
+        renderDungeonEditor(holder, inventory, dungeon);
+        open(player, inventory);
+        startPlayerMenuRefresh(player);
+    }
+
+    private void renderDungeonEditor(GuiHolder holder, Inventory inventory, Dungeon dungeon) {
         Map<String, String> ph = base(dungeon);
         button(inventory, holder, "dungeon-editor", "info", "none", ph);
         button(inventory, holder, "dungeon-editor", "settings", "open|settings", ph);
@@ -315,8 +360,14 @@ public final class GuiManager {
         button(inventory, holder, "dungeon-editor", "stop", "dungeon.stop", ph);
         button(inventory, holder, "dungeon-editor", "reset", "dungeon.reset", ph);
         button(inventory, holder, "dungeon-editor", "delete", "dungeon.delete", ph);
+        button(inventory, holder, "dungeon-editor", "advanced", "open|advanced", ph);
+        button(inventory, holder, "dungeon-editor", "doors", "open|doors", ph);
+        button(inventory, holder, "dungeon-editor", "keys", "open|keys", ph);
+        button(inventory, holder, "dungeon-editor", "checkpoints", "open|checkpoints", ph);
+        button(inventory, holder, "dungeon-editor", "markers", "feature.markers", ph);
+        button(inventory, holder, "dungeon-editor", "warp", "feature.warp", ph);
+        button(inventory, holder, "dungeon-editor", "top", "feature.top", ph);
         button(inventory, holder, "dungeon-editor", "back", "open|dungeon-list", ph);
-        open(player, inventory);
     }
 
     public void openSettings(Player player, Dungeon dungeon) {
@@ -333,6 +384,7 @@ public final class GuiManager {
             ph.put("value", settingValue(dungeon.getSettings(), settingKey));
             button(inventory, holder, "settings", itemKey, "setting|" + settingKey, ph);
         }
+        button(inventory, holder, "settings", "more", "open|advanced", base(dungeon));
         button(inventory, holder, "settings", "back", "open|dungeon-editor", base(dungeon));
         open(player, inventory);
     }
@@ -800,6 +852,7 @@ public final class GuiManager {
         button(inventory, holder, "chest-editor", "refill-seconds", "chest.field|refill-seconds", ph);
         button(inventory, holder, "chest-editor", "enabled", "chest.field|enabled", ph);
         button(inventory, holder, "chest-editor", "location", "chest.field|location", ph);
+        button(inventory, holder, "chest-editor", "required-key", "chest.field|required-key", ph);
         button(inventory, holder, "chest-editor", "delete", "chest.delete", ph);
         button(inventory, holder, "chest-editor", "back", "open|chests", ph);
         open(player, inventory);
@@ -882,7 +935,9 @@ public final class GuiManager {
                 case "player.dungeon.entry" -> {
                     Dungeon target = dungeon(payload);
                     player.closeInventory();
-                    if (target != null) {
+                    if (target != null && rightClick) {
+                        plugin.getDungeonManager().teleport(player, target);
+                    } else if (target != null) {
                         plugin.getDungeonManager().join(player, target);
                     }
                 }
@@ -920,7 +975,7 @@ public final class GuiManager {
                         openConfirm(player, target, target.getId(), "delete-dungeon", target.getId(),
                                 "dungeon-list");
                     } else if (rightClick) {
-                        target.setEnabled(!target.isEnabled());
+                        plugin.getDungeonManager().setEnabled(target, !target.isEnabled());
                         save(target);
                         openDungeonList(player, holder.getPage());
                     } else {
@@ -929,7 +984,7 @@ public final class GuiManager {
                 }
                 case "dungeon.toggle" -> {
                     if (dungeon != null) {
-                        dungeon.setEnabled(!dungeon.isEnabled());
+                        plugin.getDungeonManager().setEnabled(dungeon, !dungeon.isEnabled());
                         save(dungeon);
                         msg(player, "saved", Map.of("dungeon", dungeon.getId()));
                         openDungeonEditor(player, dungeon);
@@ -1255,9 +1310,7 @@ public final class GuiManager {
                                 "main"), holder.getDungeonId(), holder.getTargetId(), 0);
                     }
                 }
-                default -> {
-                    // Accion no reconocida: no se hace nada.
-                }
+                default -> features.handleClick(player, holder, dungeon, action, payload, rightClick);
             }
         } catch (Exception exception) {
             plugin.getLogger().warning("Error procesando clic del GUI: " + exception.getMessage());
@@ -1331,6 +1384,9 @@ public final class GuiManager {
                 return;
             }
             default -> {
+                if (features.confirmDelete(player, dungeon, action, target)) {
+                    return;
+                }
             }
         }
         openMenu(player, returnMenu, dungeon == null ? null : dungeon.getId(), null, 0);
@@ -1701,6 +1757,7 @@ public final class GuiManager {
             case "persistent" -> spawn.setPersistent(!spawn.isPersistent());
             case "clear-vanilla-drops" -> spawn.setClearVanillaDrops(!spawn.isClearVanillaDrops());
             case "burn-in-daylight" -> spawn.setBurnInDaylight(!spawn.isBurnInDaylight());
+            case "wave" -> spawn.setWave(spawn.getWave() + 1);
             default -> {
             }
         }
@@ -1730,6 +1787,7 @@ public final class GuiManager {
                 case "clear-vanilla-drops" -> spawn.setClearVanillaDrops(Boolean.parseBoolean(value));
                 case "burn-in-daylight" -> spawn.setBurnInDaylight(Boolean.parseBoolean(value));
                 case "loot-table" -> spawn.setLootTable(value);
+                case "wave" -> spawn.setWave(Integer.parseInt(value.trim()));
                 default -> {
                     return false;
                 }
@@ -1762,7 +1820,10 @@ public final class GuiManager {
             openBossEditor(player, dungeon, boss);
             return;
         }
-        if (rightClick || field.equals("name") || field.equals("bossbar.title")) {
+        if (rightClick || field.equals("name") || field.equals("bossbar.title")
+                || field.equals("cinematic-title") || field.equals("cinematic-subtitle")
+                || field.equals("cinematic-sound") || field.equals("cinematic-particle")
+                || field.equals("music-sound")) {
             startPrompt(player, "value", Map.of("key", field, "current", bossValue(boss, itemKey)),
                     () -> openBossEditor(player, dungeon, boss),
                     input -> {
@@ -1800,6 +1861,11 @@ public final class GuiManager {
             case "bossbar.color" -> boss.getBossBar().setColor(next(BOSS_BAR_COLORS, boss.getBossBar().getColor()));
             case "bossbar.style" -> boss.getBossBar().setStyle(next(BOSS_BAR_STYLES, boss.getBossBar().getStyle()));
             case "bossbar.radius" -> boss.getBossBar().setRadius(boss.getBossBar().getRadius() + 8.0D);
+            case "cinematic-enabled" -> boss.setCinematicEnabled(!boss.isCinematicEnabled());
+            case "cinematic-delay" -> boss.setCinematicDelay(boss.getCinematicDelay() >= 10 ? 0 : boss.getCinematicDelay() + 1);
+            case "cinematic-radius" -> boss.setCinematicRadius(boss.getCinematicRadius() >= 128 ? 0 : boss.getCinematicRadius() + 8.0D);
+            case "music-interval" -> boss.setMusicInterval(boss.getMusicInterval() + 10);
+            case "music-radius" -> boss.setMusicRadius(boss.getMusicRadius() >= 128 ? 8 : boss.getMusicRadius() + 8.0D);
             default -> {
             }
         }
@@ -1830,6 +1896,16 @@ public final class GuiManager {
                 case "bossbar.color" -> bar.setColor(value.toUpperCase(Locale.ROOT));
                 case "bossbar.style" -> bar.setStyle(value.toUpperCase(Locale.ROOT));
                 case "bossbar.radius" -> bar.setRadius(Double.parseDouble(value));
+                case "cinematic-enabled" -> boss.setCinematicEnabled(Boolean.parseBoolean(value));
+                case "cinematic-delay" -> boss.setCinematicDelay(Integer.parseInt(value.trim()));
+                case "cinematic-radius" -> boss.setCinematicRadius(Double.parseDouble(value.replace(',', '.')));
+                case "cinematic-title" -> boss.setCinematicTitle(value);
+                case "cinematic-subtitle" -> boss.setCinematicSubtitle(value);
+                case "cinematic-sound" -> boss.setCinematicSound(value.equalsIgnoreCase("none") ? "" : value.trim());
+                case "cinematic-particle" -> boss.setCinematicParticle(value.trim().toUpperCase(Locale.ROOT));
+                case "music-sound" -> boss.setMusicSound(value.equalsIgnoreCase("none") ? "" : value.trim());
+                case "music-interval" -> boss.setMusicInterval(Integer.parseInt(value.trim()));
+                case "music-radius" -> boss.setMusicRadius(Double.parseDouble(value.replace(',', '.')));
                 default -> {
                     return false;
                 }
@@ -1848,6 +1924,16 @@ public final class GuiManager {
         }
         if (field.equals("loot-table")) {
             openLootPicker(player, dungeon, "chest", chest.getId(), 0);
+            return;
+        }
+        if (field.equals("required-key")) {
+            List<String> options = new ArrayList<>();
+            options.add("");
+            options.addAll(dungeon.getKeys().keySet());
+            int index = Math.max(0, options.indexOf(chest.getRequiredKey()));
+            chest.setRequiredKey(options.get((index + 1) % options.size()));
+            save(dungeon);
+            openChestEditor(player, dungeon, chest);
             return;
         }
         if (field.equals("location")) {
@@ -1988,6 +2074,11 @@ public final class GuiManager {
                     openRewardEditor(player, dungeon, reward);
                 }
             }
+            case "dungeon-reward" -> {
+                dungeon.getSettings().setRewardLootTable(lootId);
+                save(dungeon);
+                features.openAdvanced(player, dungeon);
+            }
             default -> openDungeonEditor(player, dungeon);
         }
         msg(player, "saved", Map.of("dungeon", dungeon.getId()));
@@ -2020,7 +2111,11 @@ public final class GuiManager {
             case "rewards" -> openRewards(player, dungeon, page);
             case "reward-editor" -> openRewardEditor(player, dungeon,
                     dungeon == null ? null : dungeon.getReward(targetId));
-            default -> openMain(player);
+            default -> {
+                if (!features.open(player, menu, dungeon, targetId, page)) {
+                    openMain(player);
+                }
+            }
         }
     }
 
@@ -2028,7 +2123,7 @@ public final class GuiManager {
     // Utilidades de construccion
     // ------------------------------------------------------------------
 
-    private Inventory create(GuiHolder holder) {
+    Inventory create(GuiHolder holder) {
         String menu = holder.getMenu();
         GuiConfig source = menuConfig(menu);
         Dungeon dungeon = dungeon(holder.getDungeonId());
@@ -2048,12 +2143,12 @@ public final class GuiManager {
         return inventory;
     }
 
-    private void button(Inventory inventory, GuiHolder holder, String menu, String key,
+    void button(Inventory inventory, GuiHolder holder, String menu, String key,
                         String action) {
         button(inventory, holder, menu, key, action, Map.of());
     }
 
-    private void button(Inventory inventory, GuiHolder holder, String menu, String key,
+    void button(Inventory inventory, GuiHolder holder, String menu, String key,
                         String action, Map<String, String> placeholders) {
         GuiConfig source = menuConfig(menu);
         GuiConfig.ItemSpec spec = source.item(menu, key);
@@ -2067,7 +2162,7 @@ public final class GuiManager {
         }
     }
 
-    private void fillDynamic(Inventory inventory, GuiHolder holder, String menu, String templateKey,
+    void fillDynamic(Inventory inventory, GuiHolder holder, String menu, String templateKey,
                              List<ListEntry> entries, String action) {
         GuiConfig source = menuConfig(menu);
         GuiConfig.ItemSpec template = source.item(menu, templateKey);
@@ -2151,14 +2246,14 @@ public final class GuiManager {
         }
     }
 
-    private void navigation(Inventory inventory, GuiHolder holder, String menu, String returnMenu,
+    void navigation(Inventory inventory, GuiHolder holder, String menu, String returnMenu,
                             int page) {
         Dungeon dungeon = dungeon(holder.getDungeonId());
         Map<String, String> ph = base(dungeon);
         ph.put("page", String.valueOf(page + 1));
         button(inventory, holder, menu, "prev", "page|" + Math.max(0, page - 1), ph);
         button(inventory, holder, menu, "next", "page|" + (page + 1), ph);
-        button(inventory, holder, menu, "back", "open|" + returnMenu, ph);
+        button(inventory, holder, menu, "back", returnMenu == null ? "close" : "open|" + returnMenu, ph);
     }
 
     private GuiConfig menuConfig(String menu) {
@@ -2242,7 +2337,7 @@ public final class GuiManager {
         return null;
     }
 
-    private void open(Player player, Inventory inventory) {
+    void open(Player player, Inventory inventory) {
         if (player == null || inventory == null) {
             return;
         }
@@ -2253,7 +2348,7 @@ public final class GuiManager {
     // Placeholders y valores
     // ------------------------------------------------------------------
 
-    private Map<String, String> base(Dungeon dungeon) {
+    Map<String, String> base(Dungeon dungeon) {
         Map<String, String> ph = new LinkedHashMap<>();
         if (dungeon == null) {
             ph.put("dungeon", "-");
@@ -2278,6 +2373,12 @@ public final class GuiManager {
         ph.put("chests", String.valueOf(dungeon.getChests().size()));
         ph.put("rewards", String.valueOf(dungeon.getRewards().size()));
         ph.put("loot", String.valueOf(dungeon.getLootTables().size()));
+        ph.put("doors", String.valueOf(dungeon.getDoors().size()));
+        ph.put("keys", String.valueOf(dungeon.getKeys().size()));
+        ph.put("checkpoints", String.valueOf(dungeon.getCheckpoints().size()));
+        ph.put("warp", location(dungeon.getWarp()));
+        ph.put("waves", String.valueOf(dungeon.getSpawns().values().stream()
+                .map(SpawnPoint::getWave).distinct().count()));
         return ph;
     }
 
@@ -2364,6 +2465,7 @@ public final class GuiManager {
         ph.put("persistent", yesNo(spawn.isPersistent()));
         ph.put("require_ground", yesNo(spawn.isRequireGround()));
         ph.put("clear_drops", yesNo(spawn.isClearVanillaDrops()));
+        ph.put("wave", String.valueOf(spawn.getWave()));
         return ph;
     }
 
@@ -2426,6 +2528,7 @@ public final class GuiManager {
          ph.put("refill", duration(chest.getRefillSeconds()));
         ph.put("enabled", yesNo(chest.isEnabled()));
         ph.put("location", location(chest.getLocation()));
+        ph.put("key", empty(chest.getRequiredKey()));
         return ph;
     }
 
@@ -2495,6 +2598,7 @@ public final class GuiManager {
             case "burn-in-daylight" -> yesNo(spawn.isBurnInDaylight());
             case "loot-table" -> empty(spawn.getLootTable());
             case "location" -> location(spawn.getLocation());
+            case "wave" -> String.valueOf(spawn.getWave());
             default -> "-";
         };
     }
@@ -2523,6 +2627,16 @@ public final class GuiManager {
             case "bossbar-color" -> boss.getBossBar().getColor();
             case "bossbar-style" -> boss.getBossBar().getStyle();
             case "bossbar-radius" -> number(boss.getBossBar().getRadius());
+            case "cinematic-enabled" -> yesNo(boss.isCinematicEnabled());
+            case "cinematic-delay" -> boss.getCinematicDelay() + "s";
+            case "cinematic-radius" -> boss.getCinematicRadius() <= 0 ? "toda la dungeon" : number(boss.getCinematicRadius());
+            case "cinematic-title" -> empty(boss.getCinematicTitle());
+            case "cinematic-subtitle" -> empty(boss.getCinematicSubtitle());
+            case "cinematic-sound" -> empty(boss.getCinematicSound());
+            case "cinematic-particle" -> empty(boss.getCinematicParticle());
+            case "music-sound" -> empty(boss.getMusicSound());
+            case "music-interval" -> boss.getMusicInterval() + "s";
+            case "music-radius" -> number(boss.getMusicRadius());
             default -> "-";
         };
     }
@@ -2612,7 +2726,7 @@ public final class GuiManager {
         return String.valueOf((int) next);
     }
 
-    private static String next(List<String> values, String current) {
+    static String next(List<String> values, String current) {
         int index = 0;
         for (int i = 0; i < values.size(); i++) {
             if (values.get(i).equalsIgnoreCase(current)) {
@@ -2647,11 +2761,11 @@ public final class GuiManager {
         }
     }
 
-    private Dungeon dungeon(String id) {
+    Dungeon dungeon(String id) {
         return id == null ? null : plugin.getDungeonManager().getDungeon(id);
     }
 
-    private void save(Dungeon dungeon) {
+    void save(Dungeon dungeon) {
         if (dungeon != null) {
             plugin.getRepository().save(dungeon);
         }
@@ -2663,7 +2777,7 @@ public final class GuiManager {
         return list;
     }
 
-    private static <T> List<T> sorted(Collection<T> values, java.util.function.Function<T, String> key) {
+    static <T> List<T> sorted(Collection<T> values, java.util.function.Function<T, String> key) {
         List<T> list = new ArrayList<>(values);
         list.sort(Comparator.comparing(key, String.CASE_INSENSITIVE_ORDER));
         return list;
@@ -2675,16 +2789,16 @@ public final class GuiManager {
         return raw == null ? state.name() : raw;
     }
 
-    private String duration(long seconds) {
+    String duration(long seconds) {
         return plugin.getPlaceholderService().formatDuration(seconds);
     }
 
-    private String yesNo(boolean value) {
+    String yesNo(boolean value) {
         String raw = config.raw(value ? "format.yes" : "format.no");
         return raw == null ? (value ? "Si" : "No") : raw;
     }
 
-    private String location(Location location) {
+    String location(Location location) {
         if (location == null || location.getWorld() == null) {
             return empty("");
         }
@@ -2692,7 +2806,7 @@ public final class GuiManager {
                 + location.getBlockY() + ", " + location.getBlockZ();
     }
 
-    private String empty(String value) {
+    String empty(String value) {
         if (value == null || value.isBlank()) {
             String raw = config.raw("format.none");
             return raw == null ? "-" : raw;
@@ -2700,7 +2814,7 @@ public final class GuiManager {
         return value;
     }
 
-    private String number(double value) {
+    String number(double value) {
         if (Math.abs(value - Math.rint(value)) < 0.0001D) {
             return String.valueOf((long) Math.rint(value));
         }
@@ -2713,11 +2827,12 @@ public final class GuiManager {
             case "boss" -> "boss-editor";
             case "chest" -> "chest-editor";
             case "reward" -> "reward-editor";
+            case "dungeon-reward" -> "advanced";
             default -> "dungeon-editor";
         };
     }
 
-    private static int parseInt(String raw, int fallback) {
+    static int parseInt(String raw, int fallback) {
         try {
             return Integer.parseInt(raw);
         } catch (NumberFormatException exception) {
@@ -2725,7 +2840,7 @@ public final class GuiManager {
         }
     }
 
-    private static boolean validId(String id) {
+    static boolean validId(String id) {
         return id != null && id.matches("[a-zA-Z0-9_\\-]{1,32}");
     }
 
@@ -2734,7 +2849,7 @@ public final class GuiManager {
         return prefix == null ? "" : prefix;
     }
 
-    private void msg(Player player, String key, Map<String, String> placeholders) {
+    void msg(Player player, String key, Map<String, String> placeholders) {
         if (player == null) {
             return;
         }
@@ -2750,6 +2865,6 @@ public final class GuiManager {
         plugin.getMessages().sendRaw(player, config.apply(raw, all), null);
     }
 
-    private record ListEntry(String id, Map<String, String> placeholders) {
+    record ListEntry(String id, Map<String, String> placeholders) {
     }
 }
